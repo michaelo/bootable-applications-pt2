@@ -1,11 +1,18 @@
 Bootable applications
 ===
 
+TL;DR:
+--
+`./build-and-run hello.zig`
+
+About
+--
+
 This repo contains the second installment of the bootable applications project, supporting the talk "Bootable applications - fully interactive applications".
 
 Att! This might be merged with the original bootable applications repository to create a complete set of examples for multiple languages and tool chains. We'll see!
 
-The core goal of this project is to provide a basic playing ground for people interested in exploring what is possible without a proper operating system, mainly through utilization of the UEFI bio
+The core goal of this project is to provide a basic playing ground for people interested in exploring what is possible without a proper operating system, mainly through utilization of the UEFI firmware.
 
 Structure:
 ---
@@ -13,8 +20,9 @@ Structure:
 /
     demos/ - single file entry points for specific experiments
         hello.zig - example of such experiment
-    resources/
-        OVMFx64.fd - bios providing UEFI capabilities for qemu. From the EDK II SDK.
+    resources/ - vendored files from external sources
+        OVMFx64.fd - firmware providing UEFI capabilities for qemu. From the EDK II SDK.
+        font8x8/ - minimal 8x8 font glyphs from https://github.com/dhepper/font8x8
     ---
     build.sh and other convenience scripts
 ```
