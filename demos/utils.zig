@@ -183,11 +183,24 @@ test "renderChar size=16" {
 }
 
 pub fn renderString(bitmap: Bitmap, dx: i32, dy: i32, bg: BltPixel, fg: BltPixel, size: u16, text: []const u8) i32 {
-    // assumes text is eventually null-terminated
-    // float scale =
     for (text, 0..) |c, cidx| {
         const x: i32 = dx + @as(i32, @intCast(size * cidx));
         renderChar(bitmap, x, dy, bg, fg, size, c);
     }
     return @as(i32, @intCast(text.len)) * size;
+}
+
+pub fn renderStringOutlined(bitmap: Bitmap, dx: i32, dy: i32, bg: BltPixel, fg: BltPixel, outline_color: BltPixel, outline_size: i32, size: u16, text: []const u8) i32 {
+    _ = renderString(bitmap, dx - outline_size, dy - outline_size, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx, dy - outline_size, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx + outline_size, dy - outline_size, Colors.transparent, outline_color, size, text);
+
+    _ = renderString(bitmap, dx - outline_size, dy, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx + outline_size, dy, Colors.transparent, outline_color, size, text);
+
+    _ = renderString(bitmap, dx - outline_size, dy + outline_size, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx, dy + outline_size, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx + outline_size, dy + outline_size, Colors.transparent, outline_color, size, text);
+
+    return renderString(bitmap, dx, dy, bg, fg, size, text);
 }

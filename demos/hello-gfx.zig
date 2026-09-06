@@ -34,13 +34,14 @@ pub fn main() uefi.Status {
     const text_bmp = utils.Bitmap{
         .buffer = @as([*]utils.BltPixel, &buffer),
         .buffer_offset = 0,
-        .height = 16,
-        .width = 128,
-        .stride = 128,
+        .height = 32,
+        .width = 256,
+        .stride = 256,
     };
 
     // utils.renderChar(text_bmp, 0, 0, utils.Colors.transparent, utils.color(0, 0, 0), 16, 'A');
-    _ = utils.renderString(text_bmp, 0, 0, utils.Colors.transparent, utils.color(0, 0, 0), 16, "Hello!");
+    // _ = utils.renderString(text_bmp, 0, 0, utils.Colors.transparent, utils.color(0, 0, 0), 16, "Hello!");
+    _ = utils.renderStringOutlined(text_bmp, 4, 4, utils.Colors.transparent, utils.Colors.black, utils.Colors.green, 2, 16, "Hello!");
 
     gfx_out.blt(
         text_bmp.buffer,
