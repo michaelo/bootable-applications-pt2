@@ -31,9 +31,13 @@ pub fn main() uefi.Status {
     drawing.drawBox(screen, 30, 20, 100, 150, utils.Colors.red, 1);
     drawing.drawBox(screen, 70, 40, 100, 150, utils.Colors.red, 4);
 
-    // Draw circle / ellipsis
+    // Draw circle
+    drawing.drawBox(screen, 60, 60, 50, 50, utils.Colors.black, 1);
+    drawing.drawCircle(screen, 60, 60, 50, 50, utils.Colors.blue);
 
-    // Draw shaded line
+    // Draw ellipsis (TODO)
+
+    // Draw shaded line (TODO)
 
     utils.hangForKey(13);
 

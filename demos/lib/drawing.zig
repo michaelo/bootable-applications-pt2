@@ -88,6 +88,42 @@ pub fn drawBox(target: utils.Bitmap, x: i32, y: i32, width: i32, height: i32, co
     drawLineWidth(target, right - half_inty, top, right - half_inty, bottom, color, stroke_width);
 }
 
+/// Draws a circle using Jesko's method
+/// Att! Current signature matches drawBox (e.g. assumes upper left corner + dimensions) - but currently only cares about width for radius
+/// TODO: make support any ellipsis
+pub fn drawCircle(target: utils.Bitmap, x0: i32, y0: i32, width: i32, height: i32, color: utils.BltPixel) void {
+    const xc = x0 + @as(i32, @intFromFloat(@floor(@as(f32, @floatFromInt(width)) / 2)));
+    const yc = y0 + @as(i32, @intFromFloat(@floor(@as(f32, @floatFromInt(height)) / 2)));
+
+    const r = @floor(@as(f32, @floatFromInt(width - 1)) / 2);
+    var t1: i32 = @intFromFloat(@floor(r / 16));
+    const stride: i32 = @intCast(target.stride);
+    var x: i32 = @intFromFloat(r);
+    var y: i32 = 0;
+    while (x >= y) {
+        target.buffer[@intCast((yc + y) * stride + (xc + x))] = color;
+        target.buffer[@intCast((yc + x) * stride + (xc + y))] = color;
+
+        target.buffer[@intCast((yc - y) * stride + (xc + x))] = color;
+        target.buffer[@intCast((yc - x) * stride + (xc + y))] = color;
+
+        target.buffer[@intCast((yc + y) * stride + (xc - x))] = color;
+        target.buffer[@intCast((yc + x) * stride + (xc - y))] = color;
+
+        target.buffer[@intCast((yc - y) * stride + (xc - x))] = color;
+        target.buffer[@intCast((yc - x) * stride + (xc - y))] = color;
+
+        y = y + 1;
+
+        t1 = t1 + y;
+        const t2 = t1 - x;
+        if (t2 >= 0) {
+            t1 = t2;
+            x = x - 1;
+        }
+    }
+}
+
 pub fn bitmapFromScreenbuffer(gfx_out: *uefi.protocol.GraphicsOutput) utils.Bitmap {
     return .{
         .width = gfx_out.mode.info.horizontal_resolution,
