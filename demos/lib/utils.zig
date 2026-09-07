@@ -14,8 +14,7 @@ pub fn formatToU16(buf8: []u8, buf16: []u16, comptime format: []const u8, vars: 
 pub fn hangForKey(keycode: u16) void {
     const boot_services = uefi.system_table.boot_services.?;
     while (true) {
-        const event = boot_services.waitForEvent(@as([]const uefi.Event, @ptrCast(&uefi.system_table.con_in.?.wait_for_key))) catch continue;
-        _ = event;
+        _ = boot_services.waitForEvent(@as([]const uefi.Event, @ptrCast(&uefi.system_table.con_in.?.wait_for_key))) catch continue;
         const key = uefi.system_table.con_in.?.readKeyStroke() catch continue;
         if (key.unicode_char == keycode) break;
     }
@@ -23,6 +22,8 @@ pub fn hangForKey(keycode: u16) void {
 
 /// Att! We utilize .reserved as transparent (0==transparent)
 pub const BltPixel = uefi.protocol.GraphicsOutput.BltPixel; // bgra
+
+/// Shorthands for common colors
 pub const Colors = struct {
     pub const transparent: BltPixel = .{ .blue = 0, .green = 0, .red = 0, .reserved = 0 };
     pub const black: BltPixel = .{ .blue = 0, .green = 0, .red = 0, .reserved = 255 };
@@ -37,6 +38,7 @@ pub fn color(r: u8, g: u8, b: u8) BltPixel {
     return .{ .blue = b, .green = g, .red = r, .reserved = 255 };
 }
 
+/// Convenience-function to create a solid pixel
 pub fn i32ARGBToColor(i32color: i32) BltPixel {
     return (@as(*BltPixel, @ptrCast(@constCast(&i32color)))).*;
 }
@@ -45,16 +47,22 @@ test "i32ARGBToColor" {
     try std.testing.expectEqual(BltPixel{ .blue = 1, .green = 2, .red = 3, .reserved = 4 }, i32ARGBToColor(0x04030201));
 }
 
+/// Base convenience type encapsulating a pixel buffer. Core primitive for all drawing/rendering functions.
 pub const Bitmap = struct {
     width: u32, //4
     height: u32, //4
     stride: u32, //4
-    buffer_offset: u8, //1
+    buffer_offset: u8 = 0, //1
     buffer: [*]BltPixel, //8
+
+    pub fn free(self: Bitmap, alloc: std.mem.Allocator) void {
+        alloc.free(@as([]BltPixel, @ptrCast(self.buffer[0 .. self.height * self.stride])));
+    }
 };
 
 const font = @import("font.zig");
 
+/// Renders a single character, currently based off of a fixed-width 8x8 font.
 pub fn renderChar(bitmap: Bitmap, dx: i32, dy: i32, bg: BltPixel, fg: BltPixel, size: u16, ord: i32) void {
     // Fallbacks to clear if ord not found in glyph-set
     const glyph = font.getGlyph(ord) orelse ([8]u8{ 0, 0, 0, 0, 0, 0, 0, 0 })[0..];
@@ -182,6 +190,7 @@ test "renderChar size=16" {
     }, buffer);
 }
 
+/// Renders a sequence of fixed-width characters
 pub fn renderString(bitmap: Bitmap, dx: i32, dy: i32, bg: BltPixel, fg: BltPixel, size: u16, text: []const u8) i32 {
     for (text, 0..) |c, cidx| {
         const x: i32 = dx + @as(i32, @intCast(size * cidx));
@@ -190,6 +199,7 @@ pub fn renderString(bitmap: Bitmap, dx: i32, dy: i32, bg: BltPixel, fg: BltPixel
     return @as(i32, @intCast(text.len)) * size;
 }
 
+/// Brute force "outline": render multiple instances of the text offset in all directions in the outline-color before rendering the actual text in center
 pub fn renderStringOutlined(bitmap: Bitmap, dx: i32, dy: i32, bg: BltPixel, fg: BltPixel, outline_color: BltPixel, outline_size: i32, size: u16, text: []const u8) i32 {
     _ = renderString(bitmap, dx - outline_size, dy - outline_size, Colors.transparent, outline_color, size, text);
     _ = renderString(bitmap, dx, dy - outline_size, Colors.transparent, outline_color, size, text);
@@ -204,3 +214,11 @@ pub fn renderStringOutlined(bitmap: Bitmap, dx: i32, dy: i32, bg: BltPixel, fg: 
 
     return renderString(bitmap, dx, dy, bg, fg, size, text);
 }
+
+// pub fn allocator(max_bytes: usize) std.mem.Allocator {
+
+// }
+
+// pub fn arenaAllocator(max_bytes: usize) std.heap.ArenaAllocator {
+
+// }

@@ -8,6 +8,8 @@ TL;DR:
 About
 --
 
+**Design goals of project: To be a playing- and learning ground for UEFI based development. Simplicity and readability over cleverness.**
+
 This repo contains the second installment of the bootable applications project, supporting the talk "Bootable applications - fully interactive applications".
 
 Att! This might be merged with the original bootable applications repository to create a complete set of examples for multiple languages and tool chains. We'll see!
@@ -34,3 +36,15 @@ The flashusb-scripts also takes the device to flash as a second argument (e.g. `
 Recommended reading
 ---
 * ...
+
+
+Thanks / credits
+---
+
+* [TerjeW](https://github.com/terjew) - For discussions and contributions to all aspects of this project. For always being up to geek out on anything.
+
+
+TODO
+---
+* Simply integer type handling - currently lots of brute force casting in the utility functions
+* Add stroke with to line functions
