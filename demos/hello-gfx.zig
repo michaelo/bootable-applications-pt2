@@ -57,9 +57,9 @@ pub fn main() uefi.Status {
         0,
         32,
         32,
-        text_bmp.width,
-        text_bmp.height,
-        text_bmp.stride * 4,
+        @intFromFloat(text_bmp.width),
+        @intFromFloat(text_bmp.height),
+        @intFromFloat(text_bmp.stride * 4),
     ) catch {};
 
     utils.hangForKey(13);

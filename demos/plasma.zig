@@ -15,11 +15,11 @@ fn waveFunc(x: f32, y: f32, px: f32, py: f32, scaleFactor: f32) f32 {
 
 /// Returned buffer is owned by caller
 fn initializeStaticData(alloc: std.mem.Allocator, bitmap: utils.Bitmap) ![]f32 {
-    var data = try alloc.alloc(f32, bitmap.width * bitmap.height);
+    var data = try alloc.alloc(f32, @intFromFloat(bitmap.width * bitmap.height));
     errdefer alloc.free(data);
 
-    const width: f32 = @floatFromInt(bitmap.width);
-    const height: f32 = @floatFromInt(bitmap.height);
+    const width: f32 = bitmap.width;
+    const height: f32 = bitmap.height;
 
     //Position of the static points
     const p1x: f32 = width * 0.25;
@@ -87,8 +87,8 @@ fn hueToRgb(hue: u16) utils.Pixel {
 }
 
 fn plasma(staticData: []f32, backbuffer: utils.Bitmap, time: f32) void {
-    const w: f32 = @floatFromInt(backbuffer.width);
-    const h: f32 = @floatFromInt(backbuffer.height);
+    const w: f32 = (backbuffer.width);
+    const h: f32 = (backbuffer.height);
     const xPos: f32 = w / 2 + (w * @cos(time / 13));
     const yPos: f32 = h / 3 + (h * @cos(time / 17));
 
@@ -99,20 +99,15 @@ fn plasma(staticData: []f32, backbuffer: utils.Bitmap, time: f32) void {
 
     var y: f32 = 0;
 
-    while (y < h) : (y += 1)
-    // for (int y = 0; y < h; y += 1)
-    {
+    while (y < h) : (y += 1) {
         var x: f32 = 0;
-        while (x < w) : (x += 1)
-        // for (int x = 0; x < w; x += 1)
-        {
+        while (x < w) : (x += 1) {
             const pos: usize = @intFromFloat(y * w + x);
             var value =
                 staticData[pos] + waveFunc(x, y, p3x, yPos, scaleFactor) //Distance from point p3, which is moving vertically
                 + waveFunc(x, y, xPos, p4y, scaleFactor); //Distance from point p4, which is moving horizontally
 
             //value is the sum of 4 sine waves, which leaves it in the range [-4, 4]
-
             value += 3.5; //shift into something more visually appealing, with deep red on one end and deep purple on the other
             value = @mod(value + 8, 8) / 8; // Normalize to [0, 1]
             backbuffer.buffer[pos] = hueToRgb(@intFromFloat(value * 255)).argb;
@@ -139,7 +134,7 @@ pub fn main() uefi.Status {
     while (true) {
         _ = boot_serviecs.waitForEvent(&[_]uefi.Event{loopEvent}) catch continue;
         plasma(staticData, bitmap, t);
-        drawing.bltBitmapScaled(backbuffer, bitmap, 0, 0, @intCast(backbuffer.width), @intCast(backbuffer.height));
+        drawing.bltBitmapScaled(backbuffer, bitmap, 0, 0, (backbuffer.width), (backbuffer.height));
         drawing.blitToScreen(gfx_out, backbuffer, 0, 0);
         t += speed;
     }
