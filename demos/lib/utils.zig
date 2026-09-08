@@ -23,29 +23,25 @@ pub fn hangForKey(keycode: u16) void {
 /// Att! We utilize .reserved as transparent (0==transparent)
 pub const BltPixel = uefi.protocol.GraphicsOutput.BltPixel; // bgra
 
-/// Shorthands for common colors
-pub const Colors = struct {
-    pub const transparent: BltPixel = .{ .blue = 0, .green = 0, .red = 0, .reserved = 0 };
-    pub const black: BltPixel = .{ .blue = 0, .green = 0, .red = 0, .reserved = 255 };
-    pub const red: BltPixel = .{ .blue = 0, .green = 0, .red = 255, .reserved = 255 };
-    pub const blue: BltPixel = .{ .blue = 255, .green = 0, .red = 0, .reserved = 255 };
-    pub const green: BltPixel = .{ .blue = 0, .green = 255, .red = 0, .reserved = 255 };
-    pub const white: BltPixel = .{ .blue = 255, .green = 255, .red = 255, .reserved = 255 };
+// Convenient representation to allow conversion between types
+pub const Pixel = extern union {
+    /// The type commonly used when plotting pixels via UEFI
+    argb: uefi.protocol.GraphicsOutput.BltPixel,
+    /// Convenience-type for setting and manipulating
+    int: u32,
+    // float: f32,
 };
 
-/// Convenience-function to create a solid pixel
-pub fn color(r: u8, g: u8, b: u8) BltPixel {
-    return .{ .blue = b, .green = g, .red = r, .reserved = 255 };
-}
+/// Shorthands for common colors
+pub const Colors = struct {
+    pub const transparent = Pixel{ .int = 0x00000000 };
+    pub const black = Pixel{ .int = 0xff000000 };
+    pub const white = Pixel{ .int = 0xffffffff };
 
-/// Convenience-function to create a solid pixel
-pub fn i32ARGBToColor(i32color: i32) BltPixel {
-    return (@as(*BltPixel, @ptrCast(@constCast(&i32color)))).*;
-}
-
-test "i32ARGBToColor" {
-    try std.testing.expectEqual(BltPixel{ .blue = 1, .green = 2, .red = 3, .reserved = 4 }, i32ARGBToColor(0x04030201));
-}
+    pub const red = Pixel{ .int = 0xffff0000 };
+    pub const green = Pixel{ .int = 0xff00ff00 };
+    pub const blue = Pixel{ .int = 0xff0000ff };
+};
 
 /// Base convenience type encapsulating a pixel buffer. Core primitive for all drawing/rendering functions.
 pub const Bitmap = struct {
@@ -60,7 +56,7 @@ pub const Bitmap = struct {
     }
 };
 
-const font = @import("font.zig");
+const font = @import("font8x8.zig");
 
 /// Renders a single character, currently based off of a fixed-width 8x8 font.
 pub fn renderChar(bitmap: Bitmap, dx: i32, dy: i32, bg: BltPixel, fg: BltPixel, size: u16, ord: i32) void {
@@ -201,24 +197,16 @@ pub fn renderString(bitmap: Bitmap, dx: i32, dy: i32, bg: BltPixel, fg: BltPixel
 
 /// Brute force "outline": render multiple instances of the text offset in all directions in the outline-color before rendering the actual text in center
 pub fn renderStringOutlined(bitmap: Bitmap, dx: i32, dy: i32, bg: BltPixel, fg: BltPixel, outline_color: BltPixel, outline_size: i32, size: u16, text: []const u8) i32 {
-    _ = renderString(bitmap, dx - outline_size, dy - outline_size, Colors.transparent, outline_color, size, text);
-    _ = renderString(bitmap, dx, dy - outline_size, Colors.transparent, outline_color, size, text);
-    _ = renderString(bitmap, dx + outline_size, dy - outline_size, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx - outline_size, dy - outline_size, Colors.transparent.argb, outline_color, size, text);
+    _ = renderString(bitmap, dx, dy - outline_size, Colors.transparent.argb, outline_color, size, text);
+    _ = renderString(bitmap, dx + outline_size, dy - outline_size, Colors.transparent.argb, outline_color, size, text);
 
-    _ = renderString(bitmap, dx - outline_size, dy, Colors.transparent, outline_color, size, text);
-    _ = renderString(bitmap, dx + outline_size, dy, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx - outline_size, dy, Colors.transparent.argb, outline_color, size, text);
+    _ = renderString(bitmap, dx + outline_size, dy, Colors.transparent.argb, outline_color, size, text);
 
-    _ = renderString(bitmap, dx - outline_size, dy + outline_size, Colors.transparent, outline_color, size, text);
-    _ = renderString(bitmap, dx, dy + outline_size, Colors.transparent, outline_color, size, text);
-    _ = renderString(bitmap, dx + outline_size, dy + outline_size, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx - outline_size, dy + outline_size, Colors.transparent.argb, outline_color, size, text);
+    _ = renderString(bitmap, dx, dy + outline_size, Colors.transparent.argb, outline_color, size, text);
+    _ = renderString(bitmap, dx + outline_size, dy + outline_size, Colors.transparent.argb, outline_color, size, text);
 
     return renderString(bitmap, dx, dy, bg, fg, size, text);
 }
-
-// pub fn allocator(max_bytes: usize) std.mem.Allocator {
-
-// }
-
-// pub fn arenaAllocator(max_bytes: usize) std.heap.ArenaAllocator {
-
-// }

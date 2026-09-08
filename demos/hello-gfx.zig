@@ -1,4 +1,5 @@
 //! Version of hello.zig which specificly renders a text to the first available display device detected
+//! Showcases direct usage of graphics functions. Generic variants is created under libs for convenient usage in more complex examples
 
 const std = @import("std");
 const uefi = std.os.uefi;
@@ -6,7 +7,11 @@ const uefi = std.os.uefi;
 const utils = @import("lib/utils.zig");
 
 pub fn main() uefi.Status {
-    const color_background: uefi.protocol.GraphicsOutput.BltPixel = .{ .blue = 0, .green = 0, .red = 255, .reserved = 0 };
+    const color_background: uefi.protocol.GraphicsOutput.BltPixel = .{ .blue = 0, .green = 0, .red = 255, .reserved = 255 };
+    const transparent: uefi.protocol.GraphicsOutput.BltPixel = .{ .blue = 0, .green = 0, .red = 0, .reserved = 0 };
+    const black: uefi.protocol.GraphicsOutput.BltPixel = .{ .blue = 0, .green = 0, .red = 0, .reserved = 255 };
+    const green: uefi.protocol.GraphicsOutput.BltPixel = .{ .blue = 0, .green = 255, .red = 0, .reserved = 255 };
+    const red: uefi.protocol.GraphicsOutput.BltPixel = .{ .blue = 0, .green = 0, .red = 255, .reserved = 255 };
 
     var gfx_out = uefi.system_table.boot_services.?.locateProtocol(uefi.protocol.GraphicsOutput, null) catch null orelse unreachable;
 
@@ -30,7 +35,7 @@ pub fn main() uefi.Status {
 
     // Render text to separate bitmap
     var buffer: [128 * 512]utils.BltPixel = undefined;
-    @memset(&buffer, utils.Colors.red);
+    @memset(&buffer, red);
     const text_bmp = utils.Bitmap{
         .buffer = @as([*]utils.BltPixel, &buffer),
         .buffer_offset = 0,
@@ -42,7 +47,7 @@ pub fn main() uefi.Status {
     // Read characteristics of current video mode and render string to bitmap
     var scratch: [128]u8 = undefined;
     const out = std.fmt.bufPrint(&scratch, "Hello, screen: {d} x {d} ({d} ppsl)", .{ gfx_out.mode.info.horizontal_resolution, gfx_out.mode.info.vertical_resolution, gfx_out.mode.info.pixels_per_scan_line }) catch "";
-    _ = utils.renderStringOutlined(text_bmp, 4, 4, utils.Colors.transparent, utils.Colors.black, utils.Colors.green, 1, 12, out);
+    _ = utils.renderStringOutlined(text_bmp, 4, 4, transparent, black, green, 1, 12, out);
 
     // Block transfer the separate bitmap onto the display pixel buffer
     gfx_out.blt(

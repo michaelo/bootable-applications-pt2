@@ -40,7 +40,7 @@ fn initializeStaticData(alloc: std.mem.Allocator, bitmap: utils.Bitmap) ![]f32 {
     return data;
 }
 
-fn hueToRgb(hue: u16) utils.BltPixel {
+fn hueToRgb(hue: u16) utils.Pixel {
     var bgra = utils.Colors.black;
     const region = hue / 43;
     const remainder = (hue % 43) * 6;
@@ -52,34 +52,34 @@ fn hueToRgb(hue: u16) utils.BltPixel {
 
     switch (region) {
         0 => {
-            bgra.red = max;
-            bgra.green = t;
-            bgra.blue = p;
+            bgra.argb.red = max;
+            bgra.argb.green = t;
+            bgra.argb.blue = p;
         },
         1 => {
-            bgra.red = @intCast(q);
-            bgra.green = max;
-            bgra.blue = p;
+            bgra.argb.red = @intCast(q);
+            bgra.argb.green = max;
+            bgra.argb.blue = p;
         },
         2 => {
-            bgra.red = p;
-            bgra.green = max;
-            bgra.blue = t;
+            bgra.argb.red = p;
+            bgra.argb.green = max;
+            bgra.argb.blue = t;
         },
         3 => {
-            bgra.red = p;
-            bgra.green = @intCast(q);
-            bgra.blue = max;
+            bgra.argb.red = p;
+            bgra.argb.green = @intCast(q);
+            bgra.argb.blue = max;
         },
         4 => {
-            bgra.red = t;
-            bgra.green = p;
-            bgra.blue = max;
+            bgra.argb.red = t;
+            bgra.argb.green = p;
+            bgra.argb.blue = max;
         },
         else => {
-            bgra.red = max;
-            bgra.green = p;
-            bgra.blue = @intCast(q);
+            bgra.argb.red = max;
+            bgra.argb.green = p;
+            bgra.argb.blue = @intCast(q);
         },
     }
 
@@ -115,13 +115,14 @@ fn plasma(staticData: []f32, backbuffer: utils.Bitmap, time: f32) void {
 
             value += 3.5; //shift into something more visually appealing, with deep red on one end and deep purple on the other
             value = @mod(value + 8, 8) / 8; // Normalize to [0, 1]
-            backbuffer.buffer[pos] = hueToRgb(@intFromFloat(value * 255));
+            backbuffer.buffer[pos] = hueToRgb(@intFromFloat(value * 255)).argb;
         }
     }
 }
 
 pub fn main() uefi.Status {
     const gfx_out = uefi.system_table.boot_services.?.locateProtocol(uefi.protocol.GraphicsOutput, null) catch null orelse unreachable;
+    const boot_serviecs = uefi.system_table.boot_services orelse unreachable;
 
     const screen = drawing.bitmapFromScreenbuffer(gfx_out);
     const bitmap = drawing.bitmapCreate(uefi.pool_allocator, 240, 180) catch unreachable;
@@ -132,11 +133,11 @@ pub fn main() uefi.Status {
     const speed: f32 = 0.07;
 
     const fps = 60;
-    const loopEvent = uefi.system_table.boot_services.?.createEvent(.{ .timer = true }, .{ .function = null }) catch unreachable;
-    uefi.system_table.boot_services.?.setTimer(loopEvent, .periodic, 10000000 / fps) catch unreachable;
+    const loopEvent = boot_serviecs.createEvent(.{ .timer = true }, .{ .function = null }) catch unreachable;
+    boot_serviecs.setTimer(loopEvent, .periodic, 10000000 / fps) catch unreachable;
 
     while (true) {
-        _ = uefi.system_table.boot_services.?.waitForEvent(&[_]uefi.Event{loopEvent}) catch continue;
+        _ = boot_serviecs.waitForEvent(&[_]uefi.Event{loopEvent}) catch continue;
         plasma(staticData, bitmap, t);
         drawing.bltBitmapScaled(backbuffer, bitmap, 0, 0, @intCast(backbuffer.width), @intCast(backbuffer.height));
         drawing.blitToScreen(gfx_out, backbuffer, 0, 0);
