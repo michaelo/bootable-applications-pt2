@@ -131,9 +131,12 @@ pub fn main() uefi.Status {
     var t: f32 = 0;
     const speed: f32 = 0.07;
 
+    const fps = 60;
+    const loopEvent = uefi.system_table.boot_services.?.createEvent(.{ .timer = true }, .{ .function = null }) catch unreachable;
+    uefi.system_table.boot_services.?.setTimer(loopEvent, .periodic, 10000000 / fps) catch unreachable;
+
     while (true) {
-        // TODO: Add timer event
-        // utils.hangForKey(13);
+        _ = uefi.system_table.boot_services.?.waitForEvent(&[_]uefi.Event{loopEvent}) catch continue;
         plasma(staticData, bitmap, t);
         drawing.bltBitmapScaled(backbuffer, bitmap, 0, 0, @intCast(backbuffer.width), @intCast(backbuffer.height));
         drawing.blitToScreen(gfx_out, backbuffer, 0, 0);

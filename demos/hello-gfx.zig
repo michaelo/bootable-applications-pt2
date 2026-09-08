@@ -3,7 +3,7 @@
 const std = @import("std");
 const uefi = std.os.uefi;
 
-const utils = @import("utils.zig");
+const utils = @import("lib/utils.zig");
 
 pub fn main() uefi.Status {
     const color_background: uefi.protocol.GraphicsOutput.BltPixel = .{ .blue = 0, .green = 0, .red = 255, .reserved = 0 };
@@ -28,21 +28,23 @@ pub fn main() uefi.Status {
         gfx_out.mode.info.pixels_per_scan_line,
     ) catch {};
 
-    // Render text...
-    var buffer: [128 * 1024]utils.BltPixel = undefined;
+    // Render text to separate bitmap
+    var buffer: [128 * 512]utils.BltPixel = undefined;
     @memset(&buffer, utils.Colors.red);
     const text_bmp = utils.Bitmap{
         .buffer = @as([*]utils.BltPixel, &buffer),
         .buffer_offset = 0,
-        .height = 32,
-        .width = 256,
-        .stride = 256,
+        .height = 128,
+        .width = 512,
+        .stride = 512,
     };
 
-    // utils.renderChar(text_bmp, 0, 0, utils.Colors.transparent, utils.color(0, 0, 0), 16, 'A');
-    // _ = utils.renderString(text_bmp, 0, 0, utils.Colors.transparent, utils.color(0, 0, 0), 16, "Hello!");
-    _ = utils.renderStringOutlined(text_bmp, 4, 4, utils.Colors.transparent, utils.Colors.black, utils.Colors.green, 2, 16, "Hello!");
+    // Read characteristics of current video mode and render string to bitmap
+    var scratch: [128]u8 = undefined;
+    const out = std.fmt.bufPrint(&scratch, "Hello, screen: {d} x {d} ({d} ppsl)", .{ gfx_out.mode.info.horizontal_resolution, gfx_out.mode.info.vertical_resolution, gfx_out.mode.info.pixels_per_scan_line }) catch "";
+    _ = utils.renderStringOutlined(text_bmp, 4, 4, utils.Colors.transparent, utils.Colors.black, utils.Colors.green, 1, 12, out);
 
+    // Block transfer the separate bitmap onto the display pixel buffer
     gfx_out.blt(
         text_bmp.buffer,
         uefi.protocol.GraphicsOutput.BltOperation.blt_buffer_to_video,
