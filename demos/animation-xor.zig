@@ -1,5 +1,4 @@
-/// Showcases basic animation by redrawing entire screen every time.
-/// It's highly ineffective though. See animation-xor.zig for higher performance version.
+/// Replaces the render entirety of small bitmap -> scale up to backbuffer -> blit backbuffer to screen with xor drawing directly to backbuffer
 const std = @import("std");
 const uefi = std.os.uefi;
 
@@ -12,8 +11,10 @@ pub fn main() uefi.Status {
     const boot_serviecs = uefi.system_table.boot_services orelse unreachable;
     const gfx_out = uefi.system_table.boot_services.?.locateProtocol(uefi.protocol.GraphicsOutput, null) catch null orelse unreachable;
     const screen = drawing.bitmapFromScreenbuffer(gfx_out);
-    const bitmap = drawing.bitmapCreate(uefi.pool_allocator, 320, 240) catch unreachable;
+    drawing.bitmapFill(screen, bg.argb);
+    // const bitmap = drawing.bitmapCreate(uefi.pool_allocator, 320, 240) catch unreachable;
     const backbuffer = drawing.bitmapCreate(uefi.pool_allocator, screen.width, screen.height) catch unreachable;
+    drawing.bitmapFill(backbuffer, bg.argb);
 
     const fps = 240;
     const loopEvent = boot_serviecs.createEvent(.{ .timer = true }, .{ .function = null }) catch unreachable;
@@ -32,8 +33,8 @@ pub fn main() uefi.Status {
         Circle{
             .x = 0,
             .y = 0,
-            .w = 10,
-            .h = 10,
+            .w = 40,
+            .h = 40,
             .dx = 3,
             .dy = 5,
             .c = utils.Colors.green,
@@ -41,18 +42,34 @@ pub fn main() uefi.Status {
         Circle{
             .x = 30,
             .y = 80,
-            .w = 10,
-            .h = 10,
+            .w = 40,
+            .h = 40,
             .dx = 2,
             .dy = -2,
             .c = utils.Colors.blue,
         },
+        Circle{
+            .x = 30,
+            .y = 80,
+            .w = 50,
+            .h = 50,
+            .dx = -3,
+            .dy = -1,
+            .c = utils.Colors.red,
+        },
     };
 
+    // Initial draw to ensure future xor behaves as expected
+    for (circles) |s| {
+        drawing.drawCircleXor(backbuffer, s.x, s.y, s.w, s.h, s.c);
+    }
+
     while (true) {
-        // _ = boot_serviecs.waitForEvent(&[_]uefi.Event{loopEvent}) catch continue;
-        // handle logics, render any changes to bitbmap
-        drawing.bitmapFill(bitmap, bg.argb);
+        _ = boot_serviecs.waitForEvent(&[_]uefi.Event{loopEvent}) catch continue;
+        // Remove all objects
+        for (circles) |s| {
+            drawing.drawCircleXor(backbuffer, s.x, s.y, s.w, s.h, s.c);
+        }
 
         // Update state
         for (&circles) |*s| {
@@ -63,28 +80,28 @@ pub fn main() uefi.Status {
                 s.dx = -s.dx;
                 s.x = 0;
             }
-            if (s.x + s.w > bitmap.width - 1) {
+            if (s.x + s.w > backbuffer.width - 1) {
                 s.dx = -s.dx;
-                s.x = bitmap.width - s.w - 1;
+                s.x = backbuffer.width - s.w - 1;
             }
 
             if (s.y < 0) {
                 s.dy = -s.dy;
                 s.y = 0;
             }
-            if (s.y + s.h > bitmap.height - 1) {
+            if (s.y + s.h > backbuffer.height - 1) {
                 s.dy = -s.dy;
-                s.y = bitmap.height - s.h - 1;
+                s.y = backbuffer.height - s.h - 1;
             }
         }
 
-        // render bitmap to backbuffer
+        // Render all objects
         for (circles) |s| {
-            drawing.drawCircle(bitmap, s.x, s.y, s.w, s.h, s.c.argb);
+            drawing.drawCircleXor(backbuffer, s.x, s.y, s.w, s.h, s.c);
         }
 
         // Scale and transfer to screen
-        drawing.bltBitmapScaled(backbuffer, bitmap, 0, 0, backbuffer.width, backbuffer.height);
+        // drawing.bltBitmapScaled(backbuffer, bitmap, 0, 0, @intCast(backbuffer.width), @intCast(backbuffer.height));
         drawing.blitToScreen(gfx_out, backbuffer, 0, 0);
     }
 }

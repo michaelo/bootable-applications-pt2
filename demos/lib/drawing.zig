@@ -125,6 +125,39 @@ pub fn drawCircle(target: utils.Bitmap, x0: f32, y0: f32, width: f32, height: f3
     }
 }
 
+pub fn drawCircleXor(target: utils.Bitmap, x0: f32, y0: f32, width: f32, height: f32, color: utils.Pixel) void {
+    const xc = x0 + @floor(width / 2);
+    const yc = y0 + @floor(height / 2);
+
+    const r = @floor((width - 1) / 2);
+    var t1 = @floor(r / 16);
+    var x: f32 = r;
+    var y: f32 = 0;
+    var buffer: [*]u32 = @ptrCast(@alignCast(target.buffer));
+    while (x >= y) {
+        buffer[@intFromFloat((yc + y) * target.stride + (xc + x))] ^= color.int;
+        buffer[@intFromFloat((yc + x) * target.stride + (xc + y))] ^= color.int;
+
+        buffer[@intFromFloat((yc - y) * target.stride + (xc + x))] ^= color.int;
+        buffer[@intFromFloat((yc - x) * target.stride + (xc + y))] ^= color.int;
+
+        buffer[@intFromFloat((yc + y) * target.stride + (xc - x))] ^= color.int;
+        buffer[@intFromFloat((yc + x) * target.stride + (xc - y))] ^= color.int;
+
+        buffer[@intFromFloat((yc - y) * target.stride + (xc - x))] ^= color.int;
+        buffer[@intFromFloat((yc - x) * target.stride + (xc - y))] ^= color.int;
+
+        y = y + 1;
+
+        t1 = t1 + y;
+        const t2 = t1 - x;
+        if (t2 >= 0) {
+            t1 = t2;
+            x = x - 1;
+        }
+    }
+}
+
 pub fn bitmapFromScreenbuffer(gfx_out: *uefi.protocol.GraphicsOutput) utils.Bitmap {
     return .{
         .width = @floatFromInt(gfx_out.mode.info.horizontal_resolution),
