@@ -230,6 +230,30 @@ pub fn bltBitmapScaled(target: utils.Bitmap, source: utils.Bitmap, x_start: f32,
     }
 }
 
+pub fn bltBitmapXor(target: utils.Bitmap, source: utils.Bitmap, x_start: f32, y_start: f32, x_end: f32, y_end: f32) void {
+    const x_scale: f32 = (x_end - x_start) / source.width;
+    const y_scale: f32 = (y_end - y_start) / source.height;
+
+    var target_buffer: [*]utils.Pixel = @ptrCast(@alignCast(target.buffer));
+    const source_buffer: [*]utils.Pixel = @ptrCast(@alignCast(source.buffer));
+
+    for (@intFromFloat(y_start)..@intFromFloat(y_end)) |ty| {
+        const tyf: f32 = @floatFromInt(ty);
+
+        for (@intFromFloat(x_start)..@intFromFloat(x_end)) |tx| {
+            const txf: f32 = @floatFromInt(tx);
+
+            const sxf = @floor((txf - x_start) / x_scale);
+            const syf = @floor((tyf - y_start) / y_scale);
+
+            const sidx: usize = @intFromFloat(@round(syf * source.stride) + sxf);
+            const tidx: usize = @intFromFloat(@round(tyf * target.stride) + txf);
+
+            target_buffer[tidx].int ^= source_buffer[sidx].int;
+        }
+    }
+}
+
 test "bltBitmapScaled" {
     // Test stretching 2x1 to 4x2
     const source = try bitmapCreate(std.testing.allocator, 2, 1);
