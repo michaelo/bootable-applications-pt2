@@ -1,3 +1,5 @@
+//! Showcases utility functions built around drawing to bitmaps in general, and the video buffer in particular
+//! https://uefi.org/specs/UEFI/2.10/12_Protocols_Console_Support.html#graphics-output-protocol
 const std = @import("std");
 const uefi = std.os.uefi;
 

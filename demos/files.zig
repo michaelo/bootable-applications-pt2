@@ -1,4 +1,6 @@
 //! Lists and opens files from the UEFI image/partition
+//! https://uefi.org/specs/UEFI/2.10/09_Protocols_EFI_Loaded_Image.html
+//! https://uefi.org/specs/UEFI/2.10/13_Protocols_Media_Access.html#simple-file-system-protocol
 const std = @import("std");
 const uefi = std.os.uefi;
 

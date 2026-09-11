@@ -1,5 +1,6 @@
 //! This simply prints "Hello!" to the console output.
 //! Att! Not all UEFI-realizations renders console output to the screen. qemu and several tested PCs do, whereas MacBook Pros do not.
+//! https://uefi.org/specs/UEFI/2.10/12_Protocols_Console_Support.html#simple-text-output-protocol
 const std = @import("std");
 const uefi = std.os.uefi;
 
