@@ -52,7 +52,7 @@ pub fn main() uefi.Status {
     while (true) {
         // _ = boot_serviecs.waitForEvent(&[_]uefi.Event{loopEvent}) catch continue;
         // handle logics, render any changes to bitbmap
-        drawing.bitmapFill(bitmap, bg.argb);
+        drawing.bitmapFill(bitmap, bg);
 
         // Update state
         for (&circles) |*s| {
@@ -80,7 +80,7 @@ pub fn main() uefi.Status {
 
         // render bitmap to backbuffer
         for (circles) |s| {
-            drawing.drawCircle(bitmap, s.x, s.y, s.w, s.h, s.c.argb);
+            drawing.drawCircle(bitmap, s.x, s.y, s.w, s.h, s.c);
         }
 
         // Scale and transfer to screen

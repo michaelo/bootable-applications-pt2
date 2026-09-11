@@ -3,7 +3,7 @@ const uefi = std.os.uefi;
 
 const utils = @import("utils.zig");
 
-pub fn drawLineWidth(target: utils.Bitmap, x0: f32, y0: f32, x1: f32, y1: f32, color: utils.BltPixel, width: f32) void {
+pub fn drawLineWidth(target: utils.Bitmap, x0: f32, y0: f32, x1: f32, y1: f32, color: utils.Pixel, width: f32) void {
     // Stroke width: establish if majorly horizontal or vertical, then spread out in opposite dimension
     const is_vertical_dominant = @abs(x1 - x0) < @abs(y1 - y0);
     const half = @floor(width / 2);
@@ -21,7 +21,7 @@ pub fn drawLineWidth(target: utils.Bitmap, x0: f32, y0: f32, x1: f32, y1: f32, c
 }
 
 /// Limitiation: Only 1px width
-pub fn drawLine(target: utils.Bitmap, x0: f32, y0: f32, x1: f32, y1: f32, color: utils.BltPixel) void {
+pub fn drawLine(target: utils.Bitmap, x0: f32, y0: f32, x1: f32, y1: f32, color: utils.Pixel) void {
     const dx: f32 = x1 - x0;
     const dy: f32 = y1 - y0;
     const xSteps: f32 = @abs(dx);
@@ -38,7 +38,7 @@ pub fn drawLine(target: utils.Bitmap, x0: f32, y0: f32, x1: f32, y1: f32, color:
         const x = @round(xf);
         const y = @round(yf);
         if (x >= 0 and x < target.width and y >= 0 and y < target.height) {
-            target.buffer[@intFromFloat(y * target.stride + x)] = color;
+            target.buffer[@intFromFloat(y * target.stride + x)] = color.argb;
         }
         xf += xIncrement;
         yf += yIncrement;
@@ -69,7 +69,7 @@ test "drawLine" {
 }
 
 // Draws an unfilled rectangle
-pub fn drawBox(target: utils.Bitmap, x: f32, y: f32, width: f32, height: f32, color: utils.BltPixel, stroke_width: f32) void {
+pub fn drawBox(target: utils.Bitmap, x: f32, y: f32, width: f32, height: f32, color: utils.Pixel, stroke_width: f32) void {
     const half_inty = @round(stroke_width / 2);
     const left = x;
     const top = y;
@@ -93,7 +93,7 @@ pub fn drawBox(target: utils.Bitmap, x: f32, y: f32, width: f32, height: f32, co
 /// Draws a circle using Jesko's method
 /// Att! Current signature matches drawBox (e.g. assumes upper left corner + dimensions) - but currently only cares about width for radius
 /// TODO: make support any ellipsis
-pub fn drawCircle(target: utils.Bitmap, x0: f32, y0: f32, width: f32, height: f32, color: utils.BltPixel) void {
+pub fn drawCircle(target: utils.Bitmap, x0: f32, y0: f32, width: f32, height: f32, color: utils.Pixel) void {
     const xc = x0 + @floor(width / 2);
     const yc = y0 + @floor(height / 2);
 
@@ -102,17 +102,17 @@ pub fn drawCircle(target: utils.Bitmap, x0: f32, y0: f32, width: f32, height: f3
     var x: f32 = r;
     var y: f32 = 0;
     while (x >= y) {
-        target.buffer[@intFromFloat((yc + y) * target.stride + (xc + x))] = color;
-        target.buffer[@intFromFloat((yc + x) * target.stride + (xc + y))] = color;
+        target.buffer[@intFromFloat((yc + y) * target.stride + (xc + x))] = color.argb;
+        target.buffer[@intFromFloat((yc + x) * target.stride + (xc + y))] = color.argb;
 
-        target.buffer[@intFromFloat((yc - y) * target.stride + (xc + x))] = color;
-        target.buffer[@intFromFloat((yc - x) * target.stride + (xc + y))] = color;
+        target.buffer[@intFromFloat((yc - y) * target.stride + (xc + x))] = color.argb;
+        target.buffer[@intFromFloat((yc - x) * target.stride + (xc + y))] = color.argb;
 
-        target.buffer[@intFromFloat((yc + y) * target.stride + (xc - x))] = color;
-        target.buffer[@intFromFloat((yc + x) * target.stride + (xc - y))] = color;
+        target.buffer[@intFromFloat((yc + y) * target.stride + (xc - x))] = color.argb;
+        target.buffer[@intFromFloat((yc + x) * target.stride + (xc - y))] = color.argb;
 
-        target.buffer[@intFromFloat((yc - y) * target.stride + (xc - x))] = color;
-        target.buffer[@intFromFloat((yc - x) * target.stride + (xc - y))] = color;
+        target.buffer[@intFromFloat((yc - y) * target.stride + (xc - x))] = color.argb;
+        target.buffer[@intFromFloat((yc - x) * target.stride + (xc - y))] = color.argb;
 
         y = y + 1;
 
@@ -178,8 +178,8 @@ pub fn bitmapCreate(alloc: std.mem.Allocator, width: f32, height: f32) !utils.Bi
     };
 }
 
-pub fn bitmapFill(bitmap: utils.Bitmap, color: utils.BltPixel) void {
-    @memset(bitmap.buffer[0..@intFromFloat(bitmap.height * bitmap.stride)], color);
+pub fn bitmapFill(bitmap: utils.Bitmap, color: utils.Pixel) void {
+    @memset(bitmap.buffer[0..@intFromFloat(bitmap.height * bitmap.stride)], color.argb);
 }
 
 pub fn blitToScreen(gfx_out: *uefi.protocol.GraphicsOutput, bitmap: utils.Bitmap, x: i32, y: i32) void {

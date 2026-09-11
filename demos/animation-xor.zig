@@ -11,10 +11,10 @@ pub fn main() uefi.Status {
     const boot_serviecs = uefi.system_table.boot_services orelse unreachable;
     const gfx_out = uefi.system_table.boot_services.?.locateProtocol(uefi.protocol.GraphicsOutput, null) catch null orelse unreachable;
     const screen = drawing.bitmapFromScreenbuffer(gfx_out);
-    drawing.bitmapFill(screen, bg.argb);
+    drawing.bitmapFill(screen, bg);
     // const bitmap = drawing.bitmapCreate(uefi.pool_allocator, 320, 240) catch unreachable;
     const backbuffer = drawing.bitmapCreate(uefi.pool_allocator, screen.width, screen.height) catch unreachable;
-    drawing.bitmapFill(backbuffer, bg.argb);
+    drawing.bitmapFill(backbuffer, bg);
 
     const fps = 240;
     const loopEvent = boot_serviecs.createEvent(.{ .timer = true }, .{ .function = null }) catch unreachable;

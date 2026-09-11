@@ -59,14 +59,14 @@ pub const Bitmap = struct {
 const font = @import("font8x8.zig");
 
 /// Renders a single character, currently based off of a fixed-width 8x8 font.
-pub fn renderChar(bitmap: Bitmap, dx: f32, dy: f32, bg: BltPixel, fg: BltPixel, size: u16, ord: i32) void {
+pub fn renderChar(bitmap: Bitmap, dx: f32, dy: f32, bg: Pixel, fg: Pixel, size: u16, ord: i32) void {
     // Fallbacks to clear if ord not found in glyph-set
     const glyph = font.getGlyph(ord) orelse ([8]u8{ 0, 0, 0, 0, 0, 0, 0, 0 })[0..];
 
     const scale: f32 = font.BASE_FONT_SIZE / @as(f32, @floatFromInt(size));
 
     // // If not transparent
-    if (bg.reserved != 0) {
+    if (bg.argb.reserved != 0) {
         for (0..size) |x| {
             const px = dx + @as(f32, @floatFromInt(x));
             if (px < 0 or px >= bitmap.width)
@@ -86,14 +86,14 @@ pub fn renderChar(bitmap: Bitmap, dx: f32, dy: f32, bg: BltPixel, fg: BltPixel, 
 
                 const set = glyph[scaled_y] & @as(u8, @as(u8, 1) << @as(u3, @intCast(scaled_x)));
                 if (set == 0) {
-                    bitmap.buffer[@intFromFloat(py * bitmap.stride + px)] = bg;
+                    bitmap.buffer[@intFromFloat(py * bitmap.stride + px)] = bg.argb;
                 }
             }
         }
     }
 
     // If not transparent
-    if (fg.reserved != 0) {
+    if (fg.argb.reserved != 0) {
         for (0..size) |x| {
             const px = dx + @as(f32, @floatFromInt(x));
             if (px < 0 or px >= bitmap.width)
@@ -109,7 +109,7 @@ pub fn renderChar(bitmap: Bitmap, dx: f32, dy: f32, bg: BltPixel, fg: BltPixel, 
 
                 const set = glyph[scaled_y] & @as(u8, @as(u8, 1) << @as(u3, @intCast(scaled_x)));
                 if (set != 0) {
-                    bitmap.buffer[@intFromFloat(py * bitmap.stride + px)] = fg;
+                    bitmap.buffer[@intFromFloat(py * bitmap.stride + px)] = fg.argb;
                 }
             }
         }
@@ -131,7 +131,7 @@ test "renderChar size=8" {
         .stride = 8,
     };
 
-    renderChar(bmp, 0, 0, Colors.transparent.argb, fg, 8, 'A');
+    renderChar(bmp, 0, 0, Colors.transparent, .{ .argb = fg }, 8, 'A');
     try std.testing.expectEqual([_]BltPixel{
         bg, bg, fg, fg, bg, bg, bg, bg,
         bg, fg, fg, fg, fg, bg, bg, bg,
@@ -159,7 +159,7 @@ test "renderChar size=16" {
         .stride = 16,
     };
 
-    renderChar(bmp, 0, 0, Colors.transparent.argb, fg, 16, 'A');
+    renderChar(bmp, 0, 0, Colors.transparent, .{ .argb = fg }, 16, 'A');
     try std.testing.expectEqual([_]BltPixel{
         bg, bg, bg, bg, fg, fg, fg, fg, bg, bg, bg, bg, bg, bg, bg, bg,
         bg, bg, bg, bg, fg, fg, fg, fg, bg, bg, bg, bg, bg, bg, bg, bg,
@@ -181,7 +181,7 @@ test "renderChar size=16" {
 }
 
 /// Renders a sequence of fixed-width characters
-pub fn renderString(bitmap: Bitmap, dx: f32, dy: f32, bg: BltPixel, fg: BltPixel, size: u16, text: []const u8) f32 {
+pub fn renderString(bitmap: Bitmap, dx: f32, dy: f32, bg: Pixel, fg: Pixel, size: u16, text: []const u8) f32 {
     for (text, 0..) |c, cidx| {
         const x = dx + size * @as(f32, @floatFromInt(cidx));
         renderChar(bitmap, x, dy, bg, fg, size, c);
@@ -190,17 +190,17 @@ pub fn renderString(bitmap: Bitmap, dx: f32, dy: f32, bg: BltPixel, fg: BltPixel
 }
 
 /// Brute force "outline": render multiple instances of the text offset in all directions in the outline-color before rendering the actual text in center
-pub fn renderStringOutlined(bitmap: Bitmap, dx: f32, dy: f32, bg: BltPixel, fg: BltPixel, outline_color: BltPixel, outline_size: f32, size: u16, text: []const u8) f32 {
-    _ = renderString(bitmap, dx - outline_size, dy - outline_size, Colors.transparent.argb, outline_color, size, text);
-    _ = renderString(bitmap, dx, dy - outline_size, Colors.transparent.argb, outline_color, size, text);
-    _ = renderString(bitmap, dx + outline_size, dy - outline_size, Colors.transparent.argb, outline_color, size, text);
+pub fn renderStringOutlined(bitmap: Bitmap, dx: f32, dy: f32, bg: Pixel, fg: Pixel, outline_color: Pixel, outline_size: f32, size: u16, text: []const u8) f32 {
+    _ = renderString(bitmap, dx - outline_size, dy - outline_size, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx, dy - outline_size, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx + outline_size, dy - outline_size, Colors.transparent, outline_color, size, text);
 
-    _ = renderString(bitmap, dx - outline_size, dy, Colors.transparent.argb, outline_color, size, text);
-    _ = renderString(bitmap, dx + outline_size, dy, Colors.transparent.argb, outline_color, size, text);
+    _ = renderString(bitmap, dx - outline_size, dy, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx + outline_size, dy, Colors.transparent, outline_color, size, text);
 
-    _ = renderString(bitmap, dx - outline_size, dy + outline_size, Colors.transparent.argb, outline_color, size, text);
-    _ = renderString(bitmap, dx, dy + outline_size, Colors.transparent.argb, outline_color, size, text);
-    _ = renderString(bitmap, dx + outline_size, dy + outline_size, Colors.transparent.argb, outline_color, size, text);
+    _ = renderString(bitmap, dx - outline_size, dy + outline_size, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx, dy + outline_size, Colors.transparent, outline_color, size, text);
+    _ = renderString(bitmap, dx + outline_size, dy + outline_size, Colors.transparent, outline_color, size, text);
 
     return renderString(bitmap, dx, dy, bg, fg, size, text);
 }

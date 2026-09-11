@@ -47,7 +47,7 @@ pub fn main() uefi.Status {
     // Read characteristics of current video mode and render string to bitmap
     var scratch: [128]u8 = undefined;
     const out = std.fmt.bufPrint(&scratch, "Hello, screen: {d} x {d} ({d} ppsl)", .{ gfx_out.mode.info.horizontal_resolution, gfx_out.mode.info.vertical_resolution, gfx_out.mode.info.pixels_per_scan_line }) catch "";
-    _ = utils.renderStringOutlined(text_bmp, 4, 4, transparent, black, green, 1, 12, out);
+    _ = utils.renderStringOutlined(text_bmp, 4, 4, .{ .argb = transparent }, .{ .argb = black }, .{ .argb = green }, 1, 12, out);
 
     // Block transfer the separate bitmap onto the display pixel buffer
     gfx_out.blt(
