@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bootable Applications - fully interactive programs</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- This is the presentation accompanying the demos/talk-slides interactive demo -->
+</head>
+
+<body>
+    <div class="presentation">
+        <!-- <header>Bootable Applications</header> -->
+        <div class="slides">
+            <div class="slide layout-title">
+                <h1>Bootable applications</h1>
+                <h2>Next steps / fully interactive programs</h2>
+
+            </div>
+            <div class="slide cols-2">
+                <div>Slide 2</div>
+                <div>Slide 2 col 2</div>
+
+            </div>
+            <div class="slide">Slide 3</div>
+            <div class="slide stack">
+                <div class="stack-container">
+                    <div class="stack-slide">
+                        Slide 4 - stack frame 1
+                    </div>
+                    <div class="stack-slide">
+                        Slide 4 - stack frame 2
+                    </div>
+                </div>
+            </div>
+            <div class="slide layout-title">
+                <h1>That's all folks!</h1>
+                <h2>Now go do something <del>good</del> fun</h2>
+
+            </div>
+        </div>
+        <!-- <footer>...</footer> -->
+    </div>
+
+    <script>
+            const container = document.querySelector(".presentation");
+            const slides = container.querySelectorAll(".slide");
+            let current_idx = 0;
+            let current_stack_idx = 0;
+            // TBD: Always take into account and animate towards the grid position? E.g. slide and stack slide?
+
+            window.onkeydown = ((evt) => {
+                switch (evt.key) {
+                    case "ArrowLeft":
+                        {
+                            current_idx -= 1;
+                            if (current_idx < 0) current_idx = 0;
+                            window.scrollBy(0, 0);
+                            current_stack_idx = 0;
+                            slides[current_idx].scrollIntoView({ behavior: "smooth", });
+                        }
+                        break;
+                    case "ArrowRight":
+                        {
+                            current_idx += 1;
+                            if (current_idx >= slides.length) current_idx = slides.length - 1;
+                            window.scrollBy(0, 0);
+                            current_stack_idx = 0;
+                            slides[current_idx].scrollIntoView({ behavior: "smooth", });
+                        }
+                        break;
+                    case "ArrowDown":
+                        {
+                            const stack_slides = slides[current_idx].querySelectorAll(".stack-slide");
+                            current_stack_idx += 1;
+                            if (current_stack_idx >= stack_slides.length) current_stack_idx = stack_slides.length - 1;
+                            stack_slides[current_stack_idx].scrollIntoView({ behavior: "smooth", });
+                        }
+                        break;
+                    case "ArrowUp":
+                        {
+                            const stack_slides = slides[current_idx].querySelectorAll(".stack-slide");
+                            current_stack_idx -= 1;
+                            if (current_stack_idx < 0) current_stack_idx = 0;
+                            stack_slides[current_stack_idx].scrollIntoView({ behavior: "smooth", });
+                        }
+                        break;
+                    case "s":
+                        {
+                            current_idx = 0;
+                            slides[current_idx].scrollIntoView({ behavior: "smooth", });
+                        }
+                        break;
+                    case "e":
+                        {
+                            current_idx = slides.length-1;
+                            slides[current_idx].scrollIntoView({ behavior: "smooth", });
+                        }
+                        break;
+                }
+
+            });
+    </script>
+</body>
+
+</html>

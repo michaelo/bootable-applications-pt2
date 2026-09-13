@@ -1,0 +1,100 @@
+* { margin: 0; padding: 0; }
+.debug .slide {
+    border: 1px solid red;
+}
+body {
+    background: white;
+}
+
+/*
+Auto-format as much as possible. Use semantic, basic HTML
+*/
+
+/* This shall wrap all slides, and have them arranged horizontally so that we can slide from one to the next */
+/* TBD: allow optional "stacks" where one can also scroll downwards to e.g. expand on certain ideas */
+header {
+    background: gray;
+}
+
+.presentation {
+    display: grid;
+    height: 100vh;
+    /* TBD: support having the .slides take all height if no header/footer, and otherwise give space */
+    /* grid-template-rows: 1fr 10fr 1fr; */
+}
+
+.slides {
+    display: flex;
+    width: 100vw;
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    /* snappy scroll */
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+}
+
+.slide {
+    scroll-snap-align: center;
+    width: calc(100vw - 2em);
+    height: calc(100vh - 2em);
+    flex-shrink: 0;
+    padding: 1em;
+    box-sizing: content-box;
+}
+
+.stack-container {
+    width: 100vw;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    /* snappy scroll */
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+}
+
+.slide.stack {
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+.stack .stack-slide {
+    padding: 1em;
+    width: 100vw;
+    height: 100vh;
+    scroll-snap-align: center;
+}
+
+/* slide layouts */
+.layout-title {
+    align-content: center;
+}
+
+.cols-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+/* typgraphy */
+/*
+TBD: use container queries to calc sizes? Thus allowing greater composability
+*/
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.slides {
+    font-size: calc(100vw / 32);
+}
+
+h1 {
+    font-size: calc(100vw / 12);
+}
+
+h2 {
+
+}
