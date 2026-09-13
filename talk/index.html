@@ -13,12 +13,22 @@
     <div class="presentation">
         <!-- <header>Bootable Applications</header> -->
         <div class="slides">
-            <div class="slide layout-title">
-                <h1>Bootable applications</h1>
-                <h2>Next steps / fully interactive programs</h2>
+            <div class="slide layout-title cols-2-weighted" id="start">
+                <div>
+                    <h1>Bootable applications</h1>
+                    <h2>Next steps / fully interactive programs</h2>
+                    <p style="position: absolute; bottom: 1em;">Michael Odden / me@michaelodden.com / NDC Oslo 2026</p>
+
+                </div>
+                <figure>
+                    <img src="resources/qr-bapt2.svg" />
+                    <figcaption style="position: absolute; margin-left: .8em; margin-top: -.5em;">
+                        github.com/michaelo/<br />bootable-applications-pt2</figcaption>
+                </figure>
+
 
             </div>
-            <div class="slide cols-2">
+            <div class="slide cols-2" id="second">
                 <div>Slide 2</div>
                 <div>Slide 2 col 2</div>
 
@@ -34,73 +44,118 @@
                     </div>
                 </div>
             </div>
-            <div class="slide layout-title">
-                <h1>That's all folks!</h1>
-                <h2>Now go do something <del>good</del> fun</h2>
-
+            <div class="slide layout-title cols-2-weighted">
+                <div>
+                    <h1>That's all folks!</h1>
+                    <h2>Now go do something <del>good</del> fun</h2>
+                </div>
+                <figure>
+                    <img src="resources/qr-bapt2.svg" />
+                    <figcaption style="position: absolute; margin-left: .8em; margin-top: -.5em;">
+                        github.com/michaelo/<br />bootable-applications-pt2</figcaption>
+                </figure>
             </div>
         </div>
         <!-- <footer>...</footer> -->
     </div>
 
     <script>
-            const container = document.querySelector(".presentation");
-            const slides = container.querySelectorAll(".slide");
-            let current_idx = 0;
-            let current_stack_idx = 0;
-            // TBD: Always take into account and animate towards the grid position? E.g. slide and stack slide?
+        // If a slide has an ID, keep and utilize
+        // If a slide has no ID, generate one based on idx
+        // When navigating: update anchor and history
 
-            window.onkeydown = ((evt) => {
-                switch (evt.key) {
-                    case "ArrowLeft":
-                        {
-                            current_idx -= 1;
-                            if (current_idx < 0) current_idx = 0;
-                            window.scrollBy(0, 0);
-                            current_stack_idx = 0;
-                            slides[current_idx].scrollIntoView({ behavior: "smooth", });
-                        }
+        const container = document.querySelector(".presentation");
+        const slides = container.querySelectorAll(".slide");
+        let current_idx = 0;
+        let current_stack_idx = 0;
+
+        // Fill inn missing IDs
+        for(const [i, value] of slides.entries()) {
+            if(!value.id) {
+                value.id="slide-" + i;
+            }
+        }
+
+        if(window.location.hash) {
+            const slide = document.querySelector(".slide" + window.location.hash);
+            if(slide) {
+                // Find idx
+                for(const [i, value] of slides.entries()) {
+                    if(value==slide) {
+                        current_idx = i;
                         break;
-                    case "ArrowRight":
-                        {
-                            current_idx += 1;
-                            if (current_idx >= slides.length) current_idx = slides.length - 1;
-                            window.scrollBy(0, 0);
-                            current_stack_idx = 0;
-                            slides[current_idx].scrollIntoView({ behavior: "smooth", });
-                        }
-                        break;
-                    case "ArrowDown":
-                        {
-                            const stack_slides = slides[current_idx].querySelectorAll(".stack-slide");
-                            current_stack_idx += 1;
-                            if (current_stack_idx >= stack_slides.length) current_stack_idx = stack_slides.length - 1;
-                            stack_slides[current_stack_idx].scrollIntoView({ behavior: "smooth", });
-                        }
-                        break;
-                    case "ArrowUp":
-                        {
-                            const stack_slides = slides[current_idx].querySelectorAll(".stack-slide");
-                            current_stack_idx -= 1;
-                            if (current_stack_idx < 0) current_stack_idx = 0;
-                            stack_slides[current_stack_idx].scrollIntoView({ behavior: "smooth", });
-                        }
-                        break;
-                    case "s":
-                        {
-                            current_idx = 0;
-                            slides[current_idx].scrollIntoView({ behavior: "smooth", });
-                        }
-                        break;
-                    case "e":
-                        {
-                            current_idx = slides.length-1;
-                            slides[current_idx].scrollIntoView({ behavior: "smooth", });
-                        }
-                        break;
+                    }
                 }
+            }
+        }
+        // TBD: Shall we scroll smoothly to first frame - or move directly?
+        // animated:
+        // navigateToSlide(current_idx);
+        // instant:
+        slides[current_idx].scrollIntoView({behavior:"instant"});
+        
 
-            });
+        // TBD: Always take into account and animate towards the grid position? E.g. slide and stack slide?
+        function navigateToSlide(slide_idx) {
+            if (slide_idx < 0) slide_idx = 0;
+            if (slide_idx >= slides.length) slide_idx = slides.length - 1;
+
+            window.scrollBy(0, 0);
+            current_stack_idx = 0;
+            current_idx = slide_idx;
+            slides[slide_idx].scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+            if(slides[slide_idx].id) {
+                let url = new URL(window.location);
+                url.hash=slides[slide_idx].id;
+                window.history.pushState({}, "", url)
+            }
+        }
+
+        window.onkeydown = ((evt) => {
+            switch (evt.key) {
+                case "ArrowLeft":
+                    {
+                        navigateToSlide(current_idx - 1);
+                    }
+                    break;
+                case "ArrowRight":
+                    {
+                        navigateToSlide(current_idx + 1);
+                    }
+                    break;
+                case "ArrowDown":
+                    {
+                        const stack_slides = slides[current_idx].querySelectorAll(".stack-slide");
+                        if (stack_slides.length == 0) break;
+                        current_stack_idx += 1;
+                        if (current_stack_idx >= stack_slides.length) current_stack_idx = stack_slides.length - 1;
+                        window.scrollBy(0, 0);
+                        stack_slides[current_stack_idx].scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+                    }
+                    break;
+                case "ArrowUp":
+                    {
+                        const stack_slides = slides[current_idx].querySelectorAll(".stack-slide");
+                        if (stack_slides.length == 0) break;
+                        current_stack_idx -= 1;
+                        if (current_stack_idx < 0) current_stack_idx = 0;
+                        window.scrollBy(0, 0);
+                        stack_slides[current_stack_idx].scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+                    }
+                    break;
+                case "s":
+                    {
+                        navigateToSlide(0);
+                    }
+                    break;
+                case "e":
+                    {
+                        navigateToSlide(slides.length - 1);
+                    }
+                    break;
+            }
+
+        });
     </script>
 </body>
 

@@ -36,6 +36,7 @@ header {
 }
 
 .slide {
+    position: relative;
     scroll-snap-align: center;
     width: calc(100vw - 2em);
     height: calc(100vh - 2em);
@@ -74,9 +75,18 @@ header {
     align-content: center;
 }
 
+.layout-title>* {
+    align-content: center;
+}
+
 .cols-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
+}
+
+.cols-2-weighted {
+    display: grid;  
+    grid-template-columns: 3fr 2fr;
 }
 
 /* typgraphy */
@@ -93,8 +103,10 @@ body {
 
 h1 {
     font-size: calc(100vw / 12);
+    line-height: 1;
+    margin-bottom: .4em;
 }
 
 h2 {
-
+    line-height: 1;
 }
