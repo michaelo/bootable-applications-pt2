@@ -3,7 +3,9 @@ Bootable applications
 
 TL;DR:
 --
-`./build-and-run hello.zig`
+Install zig 0.17.x (0.16 and 0.15.1 should also likely work for the single-file demos) and qemu. If you have nix, you can do `nix develop`.
+
+`./build-and-run.sh hello-gfx.zig`
 
 About
 --
@@ -15,6 +17,8 @@ This repo contains the second installment of the bootable applications project, 
 Att! This might be merged with the original bootable applications repository to create a complete set of examples for multiple languages and tool chains. We'll see!
 
 The core goal of this project is to provide a basic playing ground for people interested in exploring what is possible without a proper operating system, mainly through utilization of the UEFI firmware.
+
+I encourage you all to clone, fork, contribute and otherwise just have fun with it. Let's showcase capabilities - both as isolated experiments as well as fun complete applications.
 
 Structure:
 ---
@@ -47,6 +51,6 @@ Thanks / credits
 TODO
 ---
 * Simply integer type handling - currently lots of brute force casting in the utility functions
-* Simplify builds for ARM
+* Simplify builds for ARM / alternative architectures
 * Investigate possibilities for embedding GPU-drivers
 * Create demo which showcases the proper OS handover from UEFI?
