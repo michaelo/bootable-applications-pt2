@@ -12,18 +12,62 @@ Auto-format as much as possible. Use semantic, basic HTML
 
 /* This shall wrap all slides, and have them arranged horizontally so that we can slide from one to the next */
 /* TBD: allow optional "stacks" where one can also scroll downwards to e.g. expand on certain ideas */
-header {
-    background: gray;
-}
 
 .presentation {
+    position: relative;
     display: grid;
     height: 100vh;
+    width: 100vw;
     /* TBD: support having the .slides take all height if no header/footer, and otherwise give space */
     /* grid-template-rows: 1fr 10fr 1fr; */
 }
 
+header {
+    position: fixed;
+    font-style: italic;
+    width: 100%;
+    top: 0;
+}
+
+footer {
+    position: fixed;
+    width: 100%;
+    font-style: italic;
+    bottom: 0;
+}
+
+.p-1 {
+    padding: 1%;
+}
+
+.p-2 {
+    padding: 2%;
+}
+
+.p-5 {
+    padding: 5%;
+}
+
+img {
+    max-width: 100%;
+}
+
+.dim {
+    /* filter: opacity(100%); */
+    /* filter: hue-rotate(30deg) */
+    /* mask: url("resources/qr-bapt2.svg"); */
+}
+
+.centered {
+    text-align: center;
+}
+
+figcaption {
+    font-size: .75em;
+}
 .slides {
+    position: absolute;
+    top: 0;
     display: flex;
     width: 100vw;
     overflow-x: auto;
@@ -109,4 +153,21 @@ h1 {
 
 h2 {
     line-height: 1;
+}
+
+.text-discrete {
+    font-size: .75em;
+}
+
+span {
+    white-space: nowrap;
+}
+
+
+
+ul {
+    margin-left: 1.5em;
+}
+li {
+    margin-bottom: .3em;
 }

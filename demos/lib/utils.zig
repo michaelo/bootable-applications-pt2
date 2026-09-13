@@ -20,6 +20,8 @@ pub fn hangForKey(keycode: u16) void {
     }
 }
 
+// TODO: Move all below to drawing, and normalize on "render*" or "draw*"?:
+
 /// Att! We utilize .reserved as transparent (0==transparent)
 pub const BltPixel = uefi.protocol.GraphicsOutput.BltPixel; // bgra
 
@@ -45,6 +47,13 @@ pub const Colors = struct {
 
 /// Base convenience type encapsulating a pixel buffer. Core primitive for all drawing/rendering functions.
 pub const Bitmap = struct {
+    pub const empty: @This() = .{
+        .width = 0,
+        .height = 0,
+        .stride = 0,
+        .buffer_offset = 0,
+        .buffer = undefined,
+    };
     width: f32, //4
     height: f32, //4
     stride: f32, //4

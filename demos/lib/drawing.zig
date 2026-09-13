@@ -276,3 +276,15 @@ test "bltBitmapScaled" {
         utils.Colors.black.argb, utils.Colors.black.argb, utils.Colors.black.argb, utils.Colors.black.argb,
     }, target);
 }
+
+pub fn drawPlotToBitmap(comptime W: usize, comptime H: usize, comptime ClutSize: usize, bitmap: utils.Bitmap, plot: [H][W]u8, clut: [ClutSize]utils.Pixel) void {
+    const width = @min(W, @as(usize, @intFromFloat(bitmap.width)));
+    const height = @min(H, @as(usize, @intFromFloat(bitmap.height)));
+    const stride: usize = @intFromFloat(bitmap.stride);
+
+    for (0..width) |y| {
+        for (0..height) |x| {
+            bitmap.buffer[stride * y + x] = clut[plot[y][x]].argb;
+        }
+    }
+}
