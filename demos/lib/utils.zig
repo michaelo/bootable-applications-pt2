@@ -182,11 +182,12 @@ test "renderChar size=16" {
 
 /// Renders a sequence of fixed-width characters
 pub fn renderString(bitmap: Bitmap, dx: f32, dy: f32, bg: Pixel, fg: Pixel, size: u16, text: []const u8) f32 {
+    const sizef: f32 = @floatFromInt(size);
     for (text, 0..) |c, cidx| {
-        const x = dx + size * @as(f32, @floatFromInt(cidx));
+        const x = dx + sizef * @as(f32, @floatFromInt(cidx));
         renderChar(bitmap, x, dy, bg, fg, size, c);
     }
-    return @as(f32, @floatFromInt(text.len)) * size;
+    return @as(f32, @floatFromInt(text.len)) * sizef;
 }
 
 /// Brute force "outline": render multiple instances of the text offset in all directions in the outline-color before rendering the actual text in center

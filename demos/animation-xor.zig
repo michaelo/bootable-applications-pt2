@@ -8,7 +8,7 @@ const drawing = @import("lib/drawing.zig");
 pub fn main() uefi.Status {
     const bg = utils.Pixel{ .int = 0xff000000 };
 
-    const boot_serviecs = uefi.system_table.boot_services orelse unreachable;
+    const boot_services = uefi.system_table.boot_services orelse unreachable;
     const gfx_out = uefi.system_table.boot_services.?.locateProtocol(uefi.protocol.GraphicsOutput, null) catch null orelse unreachable;
     const screen = drawing.bitmapFromScreenbuffer(gfx_out);
     drawing.bitmapFill(screen, bg);
@@ -17,8 +17,8 @@ pub fn main() uefi.Status {
     drawing.bitmapFill(backbuffer, bg);
 
     const fps = 240;
-    const loopEvent = boot_serviecs.createEvent(.{ .timer = true }, .{ .function = null }) catch unreachable;
-    boot_serviecs.setTimer(loopEvent, .periodic, 10000000 / fps) catch unreachable;
+    const loopEvent = boot_services.createEvent(.{ .timer = true }, .{ .function = null }) catch unreachable;
+    boot_services.setTimer(loopEvent, .periodic, 10000000 / fps) catch unreachable;
 
     const Circle = struct {
         x: f32 = 0,
@@ -65,7 +65,7 @@ pub fn main() uefi.Status {
     }
 
     while (true) {
-        _ = boot_serviecs.waitForEvent(&[_]uefi.Event{loopEvent}) catch continue;
+        _ = boot_services.waitForEvent(&[_]uefi.Event{loopEvent}) catch continue;
         // Remove all objects
         for (circles) |s| {
             drawing.drawCircleXor(backbuffer, s.x, s.y, s.w, s.h, s.c);
