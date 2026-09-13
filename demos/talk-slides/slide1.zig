@@ -1,7 +1,6 @@
 const std = @import("std");
 const uefi = std.os.uefi;
 const main = @import("../talk-slides.zig");
-const utils = @import("../lib/utils.zig");
 const drawing = @import("../lib/drawing.zig");
 
 // https://github.com/michaelo/bootable-applications-pt2
@@ -41,20 +40,20 @@ const qr_plot: [33][33]u8 = .{
     [_]u8{ 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0 },
 };
 
-var qr_bitmap: utils.Bitmap = .empty;
+var qr_bitmap: drawing.Bitmap = .empty;
 pub fn slide(state: *main.State, td: f32) main.SlideResult {
     _ = td;
     // Init
     // TODO: Provide deinit as well? Or solve with arena allocator?
     if (state.firstFrame and qr_bitmap.width == 0) {
         qr_bitmap = drawing.bitmapCreate(uefi.pool_allocator, 33, 33) catch unreachable;
-        drawing.drawPlotToBitmap(33, 33, 2, qr_bitmap, qr_plot, [2]utils.Pixel{ utils.Colors.black, utils.Colors.white });
+        drawing.drawPlotToBitmap(33, 33, 2, qr_bitmap, qr_plot, [2]drawing.Pixel{ drawing.Colors.black, drawing.Colors.white });
     }
 
-    drawing.bitmapFill(state.backbuffer, utils.Colors.black);
+    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
 
     const size: u16 = 16 + @as(u16, @intFromFloat(16 * @abs(@sin(state.globalT))));
-    _ = utils.renderStringOutlined(state.backbuffer, 100, 100, utils.Colors.transparent, utils.Colors.black, utils.Colors.red, 2, size, "Slide 1");
+    _ = drawing.drawStringOutlined(state.backbuffer, 100, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.red, 2, size, "Slide 1");
 
     drawing.bltBitmapScaled(state.backbuffer, qr_bitmap, 300, 10, 300 + 200, 10 + 200);
     return if (state.frameT > 10) .finished else .running;

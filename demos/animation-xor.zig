@@ -2,11 +2,10 @@
 const std = @import("std");
 const uefi = std.os.uefi;
 
-const utils = @import("lib/utils.zig");
 const drawing = @import("lib/drawing.zig");
 
 pub fn main() uefi.Status {
-    const bg = utils.Pixel{ .int = 0xff000000 };
+    const bg = drawing.Pixel{ .int = 0xff000000 };
 
     const boot_services = uefi.system_table.boot_services orelse unreachable;
     const gfx_out = uefi.system_table.boot_services.?.locateProtocol(uefi.protocol.GraphicsOutput, null) catch null orelse unreachable;
@@ -27,7 +26,7 @@ pub fn main() uefi.Status {
         h: f32 = 0,
         dx: f32 = 0,
         dy: f32 = 0,
-        c: utils.Pixel = utils.Colors.white,
+        c: drawing.Pixel = drawing.Colors.white,
     };
     var circles = [_]Circle{
         Circle{
@@ -37,7 +36,7 @@ pub fn main() uefi.Status {
             .h = 40,
             .dx = 3,
             .dy = 5,
-            .c = utils.Colors.green,
+            .c = drawing.Colors.green,
         },
         Circle{
             .x = 30,
@@ -46,7 +45,7 @@ pub fn main() uefi.Status {
             .h = 40,
             .dx = 2,
             .dy = -2,
-            .c = utils.Colors.blue,
+            .c = drawing.Colors.blue,
         },
         Circle{
             .x = 30,
@@ -55,7 +54,7 @@ pub fn main() uefi.Status {
             .h = 50,
             .dx = -3,
             .dy = -1,
-            .c = utils.Colors.red,
+            .c = drawing.Colors.red,
         },
     };
 

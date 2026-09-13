@@ -2,7 +2,6 @@
 const std = @import("std");
 const uefi = std.os.uefi;
 
-const utils = @import("lib/utils.zig");
 const drawing = @import("lib/drawing.zig");
 
 fn dist(a: f32, b: f32, c: f32, d: f32) f32 {
@@ -14,7 +13,7 @@ fn waveFunc(x: f32, y: f32, px: f32, py: f32, scaleFactor: f32) f32 {
 }
 
 /// Returned buffer is owned by caller
-fn initializeStaticData(alloc: std.mem.Allocator, bitmap: utils.Bitmap) ![]f32 {
+fn initializeStaticData(alloc: std.mem.Allocator, bitmap: drawing.Bitmap) ![]f32 {
     var data = try alloc.alloc(f32, @intFromFloat(bitmap.width * bitmap.height));
     errdefer alloc.free(data);
 
@@ -40,8 +39,8 @@ fn initializeStaticData(alloc: std.mem.Allocator, bitmap: utils.Bitmap) ![]f32 {
     return data;
 }
 
-fn hueToRgb(hue: u16) utils.Pixel {
-    var bgra = utils.Colors.black;
+fn hueToRgb(hue: u16) drawing.Pixel {
+    var bgra = drawing.Colors.black;
     const region = hue / 43;
     const remainder = (hue % 43) * 6;
     const max = 255;
@@ -86,7 +85,7 @@ fn hueToRgb(hue: u16) utils.Pixel {
     return bgra;
 }
 
-fn plasma(staticData: []f32, backbuffer: utils.Bitmap, time: f32) void {
+fn plasma(staticData: []f32, backbuffer: drawing.Bitmap, time: f32) void {
     const w: f32 = (backbuffer.width);
     const h: f32 = (backbuffer.height);
     const xPos: f32 = w / 2 + (w * @cos(time / 13));

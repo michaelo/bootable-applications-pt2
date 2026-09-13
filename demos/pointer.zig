@@ -6,7 +6,7 @@ const uefi = std.os.uefi;
 const utils = @import("lib/utils.zig");
 const drawing = @import("lib/drawing.zig");
 
-fn plotToBitmap(comptime W: usize, comptime H: usize, comptime ClutSize: usize, bitmap: utils.Bitmap, plot: [H][W]u8, clut: [ClutSize]utils.Pixel) void {
+fn plotToBitmap(comptime W: usize, comptime H: usize, comptime ClutSize: usize, bitmap: drawing.Bitmap, plot: [H][W]u8, clut: [ClutSize]drawing.Pixel) void {
     const width = @min(W, @as(usize, @intFromFloat(bitmap.width)));
     const height = @min(H, @as(usize, @intFromFloat(bitmap.height)));
     const stride: usize = @intFromFloat(bitmap.stride);
@@ -18,7 +18,7 @@ fn plotToBitmap(comptime W: usize, comptime H: usize, comptime ClutSize: usize, 
     }
 }
 
-fn createPointerBitmap(alloc: std.mem.Allocator) !utils.Bitmap {
+fn createPointerBitmap(alloc: std.mem.Allocator) !drawing.Bitmap {
     // static EFI_INT8 pointer_plot[8][8] = {
     //     {0, 0, 0, 1, 1, 0, 0, 0},
     //     {0, 0, 0, 1, 1, 0, 0, 0},
@@ -41,7 +41,7 @@ fn createPointerBitmap(alloc: std.mem.Allocator) !utils.Bitmap {
     };
 
     const bitmap = try drawing.bitmapCreate(alloc, 8, 8);
-    plotToBitmap(8, 8, 2, bitmap, pointer_plot, [2]utils.Pixel{ utils.Colors.transparent, utils.Colors.white });
+    plotToBitmap(8, 8, 2, bitmap, pointer_plot, [2]drawing.Pixel{ drawing.Colors.transparent, drawing.Colors.white });
     return bitmap;
 }
 
@@ -54,7 +54,7 @@ pub fn main() uefi.Status {
     const con_out = uefi.system_table.con_out orelse unreachable;
     con_out.reset(false) catch {};
     const screen = drawing.bitmapFromScreenbuffer(gfx_out);
-    drawing.bitmapFill(screen, utils.Colors.black.argb);
+    drawing.bitmapFill(screen, drawing.Colors.black.argb);
 
     var ptr_x: f32 = 10;
     var ptr_y: f32 = 10;
@@ -162,12 +162,12 @@ pub fn main() uefi.Status {
             _ = con_out.outputString(utils.W("     \r\nconin  \r\n")) catch unreachable;
         }
 
-        _ = utils.renderString(
+        _ = drawing.drawString(
             screen,
             100,
             100,
-            utils.Colors.black,
-            utils.Colors.white,
+            drawing.Colors.black,
+            drawing.Colors.white,
             32,
             std.fmt.bufPrint(&scratch8, "pos: {}, {}", .{ ptr_x, ptr_y }) catch "ERR",
         );

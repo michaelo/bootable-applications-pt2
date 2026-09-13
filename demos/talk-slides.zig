@@ -10,9 +10,9 @@ pub const Vector2 = struct {
 };
 
 pub const State = struct {
-    // lowres: utils.Bitmap,
-    backbuffer: utils.Bitmap,
-    screen: utils.Bitmap,
+    // lowres: drawing.Bitmap,
+    backbuffer: drawing.Bitmap,
+    screen: drawing.Bitmap,
     showDebugConsole: bool = false,
     globalT: f32 = 0,
     frameT: f32 = 0,
@@ -57,20 +57,20 @@ pub const SlideResult = enum {
 
 fn slide2(state: *State, td: f32) SlideResult {
     _ = td;
-    drawing.bitmapFill(state.backbuffer, utils.Colors.black);
+    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
     const size: u16 = 16 + @as(u16, @intFromFloat(16 * @abs(@sin(state.globalT))));
 
-    _ = utils.renderStringOutlined(state.backbuffer, 100, 100, utils.Colors.transparent, utils.Colors.black, utils.Colors.red, 2, size, "Slide 2");
+    _ = drawing.drawStringOutlined(state.backbuffer, 100, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.red, 2, size, "Slide 2");
     return .running;
 }
 
 // TODO: Have slides be able to return a state to e.g. auto-transition
 // fn animateBoxEdge(state: *State, t: f32, td: f32) void {
 //     // _ = td;
-//     // drawing.bitmapFill(state.backbuffer, utils.Colors.black);
+//     // drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
 //     // const size: u16 = 16 + @as(u16, @intFromFloat(16 * @abs(@sin(t))));
 
-//     // _ = utils.renderStringOutlined(state.backbuffer, 100, 100, utils.Colors.transparent, utils.Colors.black, utils.Colors.red, 2, size, "Slide 1");
+//     // _ = drawing.drawStringOutlined(state.backbuffer, 100, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.red, 2, size, "Slide 1");
 // }
 
 /// Will check any relevant events and provide a normalized, easily actionable definition
@@ -123,7 +123,7 @@ pub fn main() uefi.Status {
         .slideIdx = 0,
     };
 
-    drawing.bitmapFill(state.backbuffer, utils.Colors.black);
+    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
 
     // Setup all event listeners
     const loopEvent = boot_services.createEvent(.{ .timer = true }, .{ .function = null }) catch unreachable;

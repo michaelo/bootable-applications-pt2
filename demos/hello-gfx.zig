@@ -5,6 +5,7 @@ const std = @import("std");
 const uefi = std.os.uefi;
 
 const utils = @import("lib/utils.zig");
+const drawing = @import("lib/drawing.zig");
 
 pub fn main() uefi.Status {
     const color_background: uefi.protocol.GraphicsOutput.BltPixel = .{ .blue = 0, .green = 0, .red = 255, .reserved = 255 };
@@ -34,10 +35,10 @@ pub fn main() uefi.Status {
     ) catch {};
 
     // Render text to separate bitmap
-    var buffer: [128 * 512]utils.BltPixel = undefined;
+    var buffer: [128 * 512]drawing.BltPixel = undefined;
     @memset(&buffer, red);
-    const text_bmp = utils.Bitmap{
-        .buffer = @as([*]utils.BltPixel, &buffer),
+    const text_bmp = drawing.Bitmap{
+        .buffer = @as([*]drawing.BltPixel, &buffer),
         .buffer_offset = 0,
         .height = 128,
         .width = 512,
@@ -47,7 +48,7 @@ pub fn main() uefi.Status {
     // Read characteristics of current video mode and render string to bitmap
     var scratch: [128]u8 = undefined;
     const out = std.fmt.bufPrint(&scratch, "Hello, screen: {d} x {d} ({d} ppsl)", .{ gfx_out.mode.info.horizontal_resolution, gfx_out.mode.info.vertical_resolution, gfx_out.mode.info.pixels_per_scan_line }) catch "";
-    _ = utils.renderStringOutlined(text_bmp, 4, 4, .{ .argb = transparent }, .{ .argb = black }, .{ .argb = green }, 1, 12, out);
+    _ = drawing.drawStringOutlined(text_bmp, 4, 4, .{ .argb = transparent }, .{ .argb = black }, .{ .argb = green }, 1, 12, out);
 
     // Block transfer the separate bitmap onto the display pixel buffer
     gfx_out.blt(
