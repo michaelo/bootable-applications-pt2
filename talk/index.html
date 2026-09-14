@@ -7,6 +7,18 @@
     <title>Bootable Applications - fully interactive programs</title>
     <link rel="stylesheet" href="styles.css">
     <!-- This is the presentation accompanying the demos/talk-slides interactive demo -->
+     <style>
+        .image-list {
+            text-align: center;
+            justify-items: center;
+        }
+        .image-list img {
+            /* box-shadow: .4em .4em 1em 0px #000000aa; */
+            display: block;
+            max-height: 12%;
+            margin-bottom: .5em;
+        }
+     </style>
 </head>
 
 <body>
@@ -14,24 +26,24 @@
         <!-- <header>Bootable Applications</header> -->
         <div class="slides">
             <div class="slide layout-title cols-2-weighted" id="start">
-                <div>
+                <div style="margin-top: -3em;">
                     <h1>Bootable applications</h1>
-                    <h2>Next steps / <span>fully interactive programs</span></h2>
+                    <h2>Fully interactive programs</span></h2>
                     <p class="text-discrete" style="position: absolute; bottom: 1em; max-width: 55%;">
                         <span>Michael Odden</span> / <span>me@michaelodden.com</span> / <span>NDC Oslo 2026</span>
                     </p>
 
                 </div>
-                <figure class="p-5">
+                <figure class="p-5" style="margin-top: -3em;">
                     <img src="resources/qr-bapt2.svg" />
                     <figcaption style="position: absolute; margin-left: 1em; margin-top: -1em;">
-                        github.com/michaelo/<br />bootable-applications-pt2</figcaption>
+                        <a href="https://github.com/michaelo/bootable-applications-pt2">github.com/michaelo/<br />bootable-applications-pt2</a></figcaption>
                 </figure>
 
 
             </div>
             <div class="slide layout-title centered">
-                <h1>What to expect when you're …</h1>
+                <h1>What to expect<br />(when you're …)</h1>
             </div>
             <div class="slide cols-2-weighted">
                 <div>
@@ -39,7 +51,6 @@
                 
                 <ul>
                     <li>Michael Odden - independent developer</li>
-                    <li>Nothing to sell</li>
                     <li>Previous talk: <a href="https://youtu.be/uW98YqvLeKo">https://youtu.be/uW98YqvLeKo</a>
                     </li>
                     <li>New this round:
@@ -47,6 +58,7 @@
                             <li>More protocols</li>
                             <li>Greater compositions</li>
                             <li>Switched to zig</li>
+                            <li>Less time spent on tooling</li>
                         </ul>
                     </li>
                 </ul>
@@ -57,26 +69,62 @@
                     <img src="resources/qr-ba-ai.svg" style="width: 80%;">
                 </div>
             </div>
-            <!-- <div class="slide cols-2">
+            <div class="slide layout-title">
+                <h1>Why...</h1>
+            </div>
+            <div class="slide cols-2-weighted">
                 <div>
-                    <ul>
-                        <li>Michael Odden - independent developer</li>
-                    </ul>
+                <h2>Speaking of tools...</h2>
+                <ul>
+                    <li>qemu</li>
+                    <li>OVMF from EDK II</li>
+                    <li>zig</li>
+                    <li>llvm (bundled with zig)</li>
+                    <li>mtools</li>
+                </ul>
                 </div>
-            </div> -->
+                <div class="image-list">
+                    <img src="resources/logo-qemu.png">
+                    <img src="resources/logo-zig-mark.svg">
+                    <img src="resources/logo-llvm.png">
+                    <img src="resources/logo-gnu.svg">
+                </div>
+            </div>
+            <div class="slide">
+                <h2>A brief summary of UEFI</h2>
+                <ul>
+                    <li>Unified Extensible Firmware Interface</li>
+                    <li>"EFI" by Intel as BIOS for multiple CPU-architectures</li>
+                    <li>"UEFI" @ 19xx - many contributers, adopters since:<br />
+                    AMD, Apple, ARM, Intel, NVIDIA, Cisco, Qualcomm</li>
+                    <li>Well specified, quite well supported</li>
+                    <li>Consists of a basic entrypoint allowing probing system capabilities</li>
+                    <li>"Protocols"
+                        <ul>
+                            <li>Simple Text Input</li>
+                            <li>Simple Text Output</li>
+                            <li>Graphics Out</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
             <div class="slide layout-title centered">
                 <h1>Let's throw away some code!</h1>
+                <h2>Demo-time</h2>
             </div>
-            <div class="slide">Slide 3</div>
             <div class="slide stack">
-                <div class="stack-container">
-                    <div class="stack-slide">
-                        Slide 4 - stack frame 1
-                    </div>
-                    <div class="stack-slide">
-                        Slide 4 - stack frame 2
-                    </div>
+                <div class="stack-slide">
+                    Demo step 1
                 </div>
+                <div class="stack-slide">
+                    Demo step 2
+                </div>
+                <div class="stack-slide">
+                    Demo step 3
+                </div>
+            </div>
+            <div class="slide layout-title cols-2-weighted">
+                <h1>Questions?</h1>
             </div>
             <div class="slide layout-title cols-2-weighted" id="final">
                 <div>
@@ -86,11 +134,11 @@
                 <figure>
                     <img src="resources/qr-bapt2.svg" />
                     <figcaption style="position: absolute; margin-left: 1em; margin-top: -1em;">
-                        github.com/michaelo/<br />bootable-applications-pt2</figcaption>
+                        <a href="https://github.com/michaelo/bootable-applications-pt2">github.com/michaelo/<br />bootable-applications-pt2</a></figcaption>
                 </figure>
             </div>
         </div>
-        <footer>Bootable Applications</footer>
+        <footer>Bootable Applications - Michael Odden - <a href="https://github.com/michaelo/bootable-applications-pt2">https://github.com/michaelo/bootable-applications-pt2</a></footer>
     </div>
 
     <script>

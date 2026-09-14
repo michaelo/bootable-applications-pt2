@@ -89,7 +89,8 @@ figcaption {
     box-sizing: content-box;
 }
 
-.stack-container {
+.slide.stack {
+    padding: 0;
     width: 100vw;
     height: 100vh;
     overflow-y: auto;
@@ -99,12 +100,6 @@ figcaption {
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
     scrollbar-width: none;
-}
-
-.slide.stack {
-    padding: 0;
-    width: 100vw;
-    height: 100vh;
 }
 
 .stack .stack-slide {
@@ -153,6 +148,13 @@ h1 {
 
 h2 {
     line-height: 1;
+    margin-bottom: 1em;
+}
+
+.layout-title {
+    h2 {
+        margin-bottom: 0;
+    }
 }
 
 .text-discrete {
