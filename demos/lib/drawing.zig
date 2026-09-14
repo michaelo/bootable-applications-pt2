@@ -43,7 +43,8 @@ pub fn drawLine(target: Bitmap, x0: f32, y0: f32, x1: f32, y1: f32, color: Pixel
     }
 }
 
-fn expectBitmap(pixels: []const BltPixel, bitmap: Bitmap) !void {
+/// For testing
+pub fn expectBitmap(pixels: []const BltPixel, bitmap: Bitmap) !void {
     try std.testing.expectEqualSlices(BltPixel, pixels, @as([]BltPixel, @ptrCast(bitmap.buffer[0..@intFromFloat(bitmap.height * bitmap.stride)])));
 }
 
@@ -54,9 +55,9 @@ test "drawLine" {
     const bitmap = try bitmapCreate(std.testing.allocator, 4, 4);
     defer bitmap.free(std.testing.allocator);
 
-    bitmapFill(bitmap, bg);
+    bitmapFill(bitmap, .{ .argb = bg });
 
-    drawLine(bitmap, 0, 0, 4, 4, fg);
+    drawLine(bitmap, 0, 0, 4, 4, .{ .argb = fg });
 
     try expectBitmap(&[_]BltPixel{
         fg, bg, bg, bg,
@@ -264,7 +265,7 @@ test "bltBitmapScaled" {
     source.buffer[0] = Colors.white.argb;
     source.buffer[1] = Colors.blue.argb;
 
-    bitmapFill(target, Colors.black.argb);
+    bitmapFill(target, Colors.black);
 
     bltBitmapScaled(target, source, 0, 0, 4, 2);
 

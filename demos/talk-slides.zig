@@ -101,10 +101,6 @@ fn checkEvents(events: []const uefi.Event) Event {
     // return .{ .none = {} };
 }
 
-// fn getFirstOfProtocolOptimistic(comptime protocol: type) ?*protocol {
-//     return uefi.system_table.boot_services.?.locateProtocol(protocol, null) catch null orelse null;
-// }
-
 pub fn main() uefi.Status {
     const boot_services = uefi.system_table.boot_services orelse unreachable;
     const fps = 30;
