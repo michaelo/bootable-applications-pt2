@@ -1,5 +1,6 @@
 /// Highly narrow, use-case specific BMP support.
 /// Currently only supports uncompressed, 32bit
+/// https://gibberlings3.github.io/iesdp/file_formats/ie_formats/bmp.htm
 const std = @import("std");
 const testing = std.testing;
 const drawing = @import("drawing.zig");
@@ -87,7 +88,7 @@ pub fn loadBmpToBitmapFromReader(allocator: std.mem.Allocator, reader: *std.Io.R
                     .blue = px[0],
                     .reserved = 255,
                 },
-                else => unreachable,
+                else => return error.UnsupportedBitdepth,
             };
         }
     }

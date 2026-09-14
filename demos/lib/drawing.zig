@@ -89,6 +89,37 @@ pub fn drawBox(target: Bitmap, x: f32, y: f32, width: f32, height: f32, color: P
     drawLineWidth(target, right - half_inty, top, right - half_inty, bottom, color, stroke_width);
 }
 
+pub fn drawBoxFilled(target: Bitmap, x: f32, y: f32, width: f32, height: f32, bg_color: Pixel, border_color: Pixel, stroke_width: f32) void {
+    const half_inty = @round(stroke_width / 2);
+    const left = x;
+    const top = y;
+    const right = x + width - 1;
+    const bottom = y + height - 1;
+    // TODO: Can alternatively solve stroke_width by drawing increasingly smaller boxes
+
+    // TODO: May be
+    const x_idx: usize = @intFromFloat(x);
+    const x_end_idx: usize = @intFromFloat(x + width);
+    var y_idx: usize = @intFromFloat(y);
+    const y_end_idx: usize = @intFromFloat(y + height);
+    const target_stride: usize = @intFromFloat(target.stride);
+    while (y_idx < y_end_idx) : (y_idx += 1) {
+        @memset(target.buffer[y_idx * target_stride + x_idx .. y_idx * target_stride + x_end_idx], bg_color.argb);
+    }
+
+    // top edge
+    drawLineWidth(target, left, top + half_inty, right, top + half_inty, border_color, stroke_width);
+
+    // bottom edge
+    drawLineWidth(target, left, bottom - half_inty, right, bottom - half_inty, border_color, stroke_width);
+
+    // left edge
+    drawLineWidth(target, left + half_inty, top, left + half_inty, bottom, border_color, stroke_width);
+
+    // right edge
+    drawLineWidth(target, right - half_inty, top, right - half_inty, bottom, border_color, stroke_width);
+}
+
 /// Draws a circle using Jesko's method
 /// Att! Current signature matches drawBox (e.g. assumes upper left corner + dimensions) - but currently only cares about width for radius
 /// TODO: make support any ellipsis
@@ -181,7 +212,7 @@ pub fn bitmapFill(bitmap: Bitmap, color: Pixel) void {
     @memset(bitmap.buffer[0..@intFromFloat(bitmap.height * bitmap.stride)], color.argb);
 }
 
-pub fn blitToScreen(gfx_out: *uefi.protocol.GraphicsOutput, bitmap: Bitmap, x: i32, y: i32) void {
+pub fn bltToScreen(gfx_out: *uefi.protocol.GraphicsOutput, bitmap: Bitmap, x: i32, y: i32) void {
     gfx_out.blt(
         bitmap.buffer,
         uefi.protocol.GraphicsOutput.BltOperation.blt_buffer_to_video,
