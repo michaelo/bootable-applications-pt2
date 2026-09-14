@@ -134,7 +134,7 @@ pub fn main() uefi.Status {
         _ = boot_serviecs.waitForEvent(&[_]uefi.Event{loopEvent}) catch continue;
         plasma(staticData, bitmap, t);
         drawing.bltBitmapScaled(backbuffer, bitmap, 0, 0, (backbuffer.width), (backbuffer.height));
-        drawing.blitToScreen(gfx_out, backbuffer, 0, 0);
+        drawing.bltToScreen(gfx_out, backbuffer, 0, 0);
         t += speed;
     }
 

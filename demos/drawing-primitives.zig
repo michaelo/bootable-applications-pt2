@@ -24,7 +24,7 @@ pub fn main() uefi.Status {
     drawing.drawLineWidth(bitmap, 3, 3, 30, 30, drawing.Colors.red, 1);
 
     // Transfer bitmap (unscaled) to display
-    drawing.blitToScreen(gfx_out, bitmap, 0, 0);
+    drawing.bltToScreen(gfx_out, bitmap, 0, 0);
 
     // Transfer and scale bitmap to display
     drawing.bltBitmapScaled(screen, bitmap, 150, 150, 400, 400);

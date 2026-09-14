@@ -60,7 +60,7 @@ pub fn main() uefi.Status {
     var ptr_y: f32 = 10;
 
     const pointer = createPointerBitmap(uefi.pool_allocator) catch unreachable;
-    // drawing.blitToScreen(gfx_out, pointer, ptr_x, ptr_y);
+    // drawing.bltToScreen(gfx_out, pointer, ptr_x, ptr_y);
 
     con_out.setCursorPosition(0, 0) catch {};
     _ = con_out.outputString(utils.W("Checking for pointers")) catch unreachable;

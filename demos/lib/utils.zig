@@ -19,3 +19,7 @@ pub fn hangForKey(keycode: u16) void {
         if (key.unicode_char == keycode) break;
     }
 }
+
+pub fn getFirstOfProtocolOptimistic(comptime protocol: type) ?*protocol {
+    return uefi.system_table.boot_services.?.locateProtocol(protocol, null) catch null orelse null;
+}
