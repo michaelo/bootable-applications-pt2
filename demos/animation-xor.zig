@@ -101,6 +101,6 @@ pub fn main() uefi.Status {
 
         // Scale and transfer to screen
         // drawing.bltBitmapScaled(backbuffer, bitmap, 0, 0, @intCast(backbuffer.width), @intCast(backbuffer.height));
-        drawing.blitToScreen(gfx_out, backbuffer, 0, 0);
+        drawing.bltToScreen(gfx_out, backbuffer, 0, 0);
     }
 }
