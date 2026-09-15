@@ -3,6 +3,8 @@ const uefi = std.os.uefi;
 
 const utils = @import("lib/utils.zig");
 const drawing = @import("lib/drawing.zig");
+const DebugConsole = @import("talk-slides/debug-console.zig").DebugConsole;
+const Shaders = @import("talk-slides/shader-tests.zig");
 
 pub const Vector2 = struct {
     x: f32,
@@ -15,16 +17,17 @@ pub const State = struct {
         .fg = drawing.Colors.black,
     },
     activeElement: u32 = 0, // Used e.g. for tab activity
-    // lowres: drawing.Bitmap,
+    lowres: drawing.Bitmap,
     backbuffer: drawing.Bitmap,
     screen: drawing.Bitmap,
-    showDebugConsole: bool = false,
+    // showDebugConsole: bool = false,
     globalT: f32 = 0,
     frameT: f32 = 0,
     slideIdx: usize = 0,
     firstFrame: bool = false,
     // displaySize: Vector2 = .{ 0, 0 },
     pointerPos: Vector2 = .{ .x = 0, .y = 0 },
+    event: ?Event = null,
     // rendermode: scale up | backbuffer | raw (assumes screen is directly manipulated, do nothing)
 };
 
@@ -32,26 +35,35 @@ pub const EventType = enum {
     none,
     key_down,
     // key_up,
-    pointer_down,
-    pointer_up,
-    pointer_move,
+    // pointer_down,
+    // pointer_up,
+    // pointer_move,
+    pointer,
 };
 
 pub const Event = union(EventType) {
     none: void,
     key_down: struct {
         keyCode: u16,
+        scanCode: u16,
         ctrl: bool = false,
         esc: bool = false,
+        enter: bool = false,
+        up: bool = false,
+        down: bool = false,
+        left: bool = false,
+        right: bool = false,
     },
     // Currently not solved. May not be possible without proper driver
     // key_up: struct {
     //     keyCode: u16,
     // },
     // TBD: not have point down/up/move as separate events, but part of a common pointer?
-    pointer_down: void,
-    pointer_up: void,
-    pointer_move: struct {
+    // pointer_down: void,
+    // pointer_up: void,
+    pointer: struct {
+        left: bool = false,
+        right: bool = false,
         x: f32 = 0,
         y: f32 = 0,
     },
@@ -62,101 +74,24 @@ pub const SlideResult = enum {
     finished,
 };
 
-fn DebugConsole(comptime size: usize) type {
-    return struct {
-        const Self = @This();
-
-        data: [size][128]u8 = undefined,
-        lengths: [size]usize = undefined,
-
-        len: usize = 0,
-        next_idx: usize = 0,
-
-        fg: drawing.Pixel = drawing.Colors.black,
-        bg: drawing.Pixel = drawing.Colors.white,
-
-        pub fn write(self: *Self, comptime format: []const u8, params: anytype) void {
-            const str = std.fmt.bufPrint(&self.data[self.next_idx], format, params) catch "";
-            self.lengths[self.next_idx] = str.len;
-
-            // We've reached capacity
-            if (self.len < size) {
-                self.len += 1;
-            }
-
-            self.next_idx += 1;
-
-            if (self.next_idx >= self.data.len) {
-                self.next_idx = 0;
-            }
-        }
-
-        fn render(self: Self, bitmap: drawing.Bitmap, box: Box, text_size: u16) void {
-            // Starting at bottom, draw last line, then fill upwards, backwards
-            const line_spacing = 2;
-            const padding = 2;
-
-            // TODO: Render background
-            drawing.drawBoxFilled(bitmap, box.x, box.y, box.w, box.h, self.bg, self.bg, 1);
-
-            if (self.len == 0) return;
-
-            var line_y: f32 = box.y + box.h - text_size - padding;
-
-            var line_idx: i32 = 0;
-            const lines_total: i32 = @intCast(self.len);
-            // var lines_printed: i32 = 0;
-            while (line_idx < lines_total) : (line_idx += 1) {
-                // var data_idx: i32 = @intCast(if(self.next_idx == 0) self.len-1 else self.next_idx-1);
-                var data_idx: i32 = @as(i32, @intCast(self.next_idx)) - line_idx - 1;
-                if (data_idx < 0) {
-                    data_idx += @intCast(self.len);
-                }
-
-                _ = drawing.drawString(
-                    bitmap,
-                    box.x + padding,
-                    line_y,
-                    self.bg,
-                    self.fg,
-                    text_size,
-                    self.data[@intCast(data_idx)][0..self.lengths[@intCast(data_idx)]],
-                );
-                line_y -= text_size + line_spacing;
-
-                if (line_y < box.y) {
-                    break;
-                }
-            }
-        }
+fn createPointerBitmap(alloc: std.mem.Allocator) !drawing.Bitmap {
+    const pointer_plot: [8][8]u8 = .{
+        [_]u8{ 1, 1, 1, 1, 1, 1, 1, 0 },
+        [_]u8{ 1, 1, 1, 1, 1, 1, 0, 0 },
+        [_]u8{ 1, 1, 1, 1, 1, 0, 0, 0 },
+        [_]u8{ 1, 1, 1, 1, 1, 0, 0, 0 },
+        [_]u8{ 1, 1, 1, 1, 1, 1, 0, 0 },
+        [_]u8{ 1, 1, 0, 0, 1, 1, 1, 0 },
+        [_]u8{ 1, 0, 0, 0, 0, 1, 1, 1 },
+        [_]u8{ 0, 0, 0, 0, 0, 0, 1, 1 },
     };
+
+    const bitmap = try drawing.bitmapCreate(alloc, 8, 8);
+    drawing.drawPlotToBitmap(8, 8, 2, bitmap, pointer_plot, [2]drawing.Pixel{ drawing.Colors.transparent, drawing.Colors.white });
+    return bitmap;
 }
 
-test "DebugConsole" {
-    var console_uut: DebugConsole(3) = .{};
-    try std.testing.expectEqual(0, console_uut.len);
-    try std.testing.expectEqual(0, console_uut.next_idx);
-
-    console_uut.write("data: {d}", .{1});
-    try std.testing.expectEqual(1, console_uut.len);
-    try std.testing.expectEqual(1, console_uut.next_idx);
-
-    console_uut.write("data: {d}", .{2});
-    try std.testing.expectEqual(2, console_uut.len);
-    try std.testing.expectEqual(2, console_uut.next_idx);
-
-    console_uut.write("data: {d}", .{3});
-    try std.testing.expectEqual(3, console_uut.len);
-    try std.testing.expectEqual(0, console_uut.next_idx);
-
-    console_uut.write("data: {d}", .{4});
-    try std.testing.expectEqual(3, console_uut.len);
-    try std.testing.expectEqual(1, console_uut.next_idx);
-
-    console_uut.write("data: {d}", .{5});
-    try std.testing.expectEqual(3, console_uut.len);
-    try std.testing.expectEqual(2, console_uut.next_idx);
-}
+var pointerBitmap: drawing.Bitmap = undefined;
 
 fn slide2(state: *State, td: f32) SlideResult {
     _ = td;
@@ -164,6 +99,32 @@ fn slide2(state: *State, td: f32) SlideResult {
     const size: u16 = 16 + @as(u16, @intFromFloat(16 * @abs(@sin(state.globalT))));
 
     _ = drawing.drawStringOutlined(state.backbuffer, 100, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.red, 2, size, "Slide 2");
+
+    if (state.firstFrame) {
+        pointerBitmap = createPointerBitmap(uefi.pool_allocator) catch unreachable;
+        drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + 24, state.pointerPos.y + 24);
+    }
+
+    // Handle pointer
+    if (state.event) |event| {
+        switch (event) {
+            .pointer => |p| {
+                drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + 24, state.pointerPos.y + 24);
+                state.pointerPos.x += p.x;
+                state.pointerPos.y += p.y;
+                drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + 24, state.pointerPos.y + 24);
+            },
+            else => {},
+        }
+    }
+
+    return .running;
+}
+
+fn slideShader(state: *State, dt: f32) SlideResult {
+    _ = dt;
+    Shaders.renderShader(state.lowres, state.globalT, Shaders.shaderRadialPlasma);
+    drawing.bltBitmapScaled(state.backbuffer, state.lowres, 0, 0, state.backbuffer.width, state.backbuffer.height);
     return .running;
 }
 
@@ -176,7 +137,7 @@ fn slide2(state: *State, td: f32) SlideResult {
 //     // _ = drawing.drawStringOutlined(state.backbuffer, 100, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.red, 2, size, "Slide 1");
 // }
 
-const Box = struct {
+pub const Box = struct {
     x: f32,
     y: f32,
     w: f32,
@@ -214,6 +175,10 @@ fn slideFinal(state: *State, td: f32) SlideResult {
     _ = td;
 }
 
+fn toF32(value: anytype) f32 {
+    return @floatFromInt(value);
+}
+
 /// Will check any relevant events and provide a normalized, easily actionable definition
 /// Currently a quite raw normalization - intended to allow the slide handlers to implement their own logics
 /// In a proper system this step would likely normalize events to high level application actions
@@ -234,7 +199,10 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
     switch (event_idx) {
         0 => {
             if (instances.simpleTextInputEx) |stix| {
-                const key = stix.readKeyStroke() catch unreachable;
+                const key = stix.readKeyStroke() catch {
+                    state.console.write("stix.readKeyStroke() error", .{});
+                    return .{ .none = {} };
+                };
                 // Uncomment this to show more info of the incoming data
                 // state.console.write("key: scan: {d}, unicode: {d}, ctrl: {}, shift: {}", .{
                 //     key.input.scan_code,
@@ -244,13 +212,19 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
                 // });
                 return .{ .key_down = .{
                     .keyCode = key.input.unicode_char,
-                    .ctrl = key.state.shift.left_control_pressed,
+                    .scanCode = key.input.scan_code,
+                    .ctrl = key.state.shift.left_control_pressed or key.state.shift.left_logo_pressed or key.state.shift.left_alt_pressed or key.state.shift.right_control_pressed or key.state.shift.right_logo_pressed or key.state.shift.right_alt_pressed,
                     .esc = key.input.scan_code == 23,
+                    .enter = key.input.unicode_char == 13,
                 } };
             } else if (instances.simpleTextInput) |sti| {
-                const key = sti.readKeyStroke() catch unreachable;
+                const key = sti.readKeyStroke() catch {
+                    state.console.write("sti.readKeyStroke() error", .{});
+                    return .{ .none = {} };
+                };
                 return .{ .key_down = .{
                     .keyCode = key.unicode_char,
+                    .scanCode = key.scan_code,
                     .esc = key.scan_code == 23,
                 } };
             }
@@ -259,13 +233,19 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
         1 => {
             // pointer
             if (instances.simplePointer) |sp| {
-                _ = sp;
-                return .{ .pointer_move = .{
-                    .x = 1,
-                    .y = 2,
+                const key = sp.getState() catch {
+                    state.console.write("sp.getState() error", .{});
+                    return .{ .none = {} };
+                };
+
+                return .{ .pointer = .{
+                    .left = key.left_button,
+                    .right = key.right_button,
+                    .x = toF32(key.relative_movement_x) / toF32(sp.mode.resolution_x) * 5,
+                    .y = toF32(key.relative_movement_y) / toF32(sp.mode.resolution_y) * 5,
                 } };
             }
-            return .{ .pointer_move = .{} };
+            return .{ .none = {} };
         },
         2 => {
             // animation frame timer
@@ -279,6 +259,23 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
     // return .{ .none = {} };
 }
 
+var title_bitmap: drawing.Bitmap = .empty;
+fn slideIntro(state: *State, td: f32) SlideResult {
+    _ = td;
+    if (state.firstFrame) {
+        title_bitmap = drawing.bitmapCreate(uefi.pool_allocator, drawing.textWidth("Applications", 48), 130) catch unreachable;
+        drawing.bitmapFill(title_bitmap, drawing.Colors.black);
+        _ = drawing.drawStringOutlined(title_bitmap, 12, 2, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.white, 2, 48, "Bootable");
+        _ = drawing.drawStringOutlined(title_bitmap, 2, 48, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.white, 2, 48, "Applications");
+        _ = drawing.drawStringOutlined(title_bitmap, 2, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.white, 1, 16, "- fully interactive programs");
+        // _ = drawing.drawStringOutlined(title_bitmap, 32, 120, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.white, 2, 16, "programs");
+    }
+
+    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
+    drawing.bltBitmapScaled(state.backbuffer, title_bitmap, 10, 10, 550, 280);
+    return .running;
+}
+
 pub fn main() uefi.Status {
     const boot_services = uefi.system_table.boot_services orelse unreachable;
 
@@ -289,10 +286,11 @@ pub fn main() uefi.Status {
     const screen = drawing.bitmapFromScreenbuffer(gfx_out);
 
     var state: State = .{
+        .lowres = drawing.bitmapCreate(uefi.pool_allocator, 320, 240) catch unreachable,
         .backbuffer = drawing.bitmapCreate(uefi.pool_allocator, screen.width, screen.height) catch unreachable,
         .screen = screen,
         .pointerPos = .{ .x = 100, .y = 100 },
-        .showDebugConsole = false,
+        // .showDebugConsole = false,
         .slideIdx = 0,
     };
 
@@ -331,8 +329,11 @@ pub fn main() uefi.Status {
 
         // Check for pointer, which may or may not be avaiable
         if (utils.getFirstOfProtocolOptimistic(uefi.protocol.SimplePointer)) |spp| {
+            protocolInstances.simplePointer = spp;
+            state.console.write("Found pointer", .{});
             events_buf[event_idx] = spp.wait_for_input;
         } else {
+            state.console.write("Fallback pointer", .{});
             events_buf[event_idx] = dummyEvent;
         }
         event_idx += 1;
@@ -350,10 +351,13 @@ pub fn main() uefi.Status {
     state.slideIdx = 0;
     state.firstFrame = true;
     const slides = [_]*const fn (*State, f32) SlideResult{
-        @import("talk-slides/slide1.zig").slide, slide2,
+        slideShader,
+        slideIntro,
+        @import("talk-slides/slide1.zig").slide,
+        slide2,
     };
 
-    var show_debug: bool = true;
+    var show_debug: bool = false;
 
     // "Game loop"
     while (true) {
@@ -362,6 +366,8 @@ pub fn main() uefi.Status {
         const event = checkEvents(&state, events[0..], &protocolInstances);
         if (event != .none) {
             state.console.write("event: {}", .{event});
+            state.console.write("...", .{});
+            state.event = event;
         }
         // TODO: Make event into action? e.g. .slide_next, .slide_prev, .quit
         switch (event) {
@@ -412,11 +418,11 @@ pub fn main() uefi.Status {
         // Render debug console
         if (show_debug) {
             state.console.render(state.backbuffer, .{
-                .x = state.backbuffer.width - 500,
-                .w = 500,
-                .y = state.backbuffer.height - 220,
-                .h = 220,
-            }, 8);
+                .x = 0,
+                .w = state.backbuffer.width,
+                .y = state.backbuffer.height - state.backbuffer.height / 2,
+                .h = state.backbuffer.height / 2,
+            }, @intFromFloat(state.backbuffer.width / 100));
         }
 
         // Render to screen
