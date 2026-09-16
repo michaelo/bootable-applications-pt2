@@ -4,40 +4,51 @@ const uefi = std.os.uefi;
 const utils = @import("lib/utils.zig");
 const drawing = @import("lib/drawing.zig");
 const DebugConsole = @import("talk-slides/debug-console.zig").DebugConsole;
-const Shaders = @import("talk-slides/shader-tests.zig");
+const Shaders = @import("lib/shaders.zig");
+
+// Default colors to allow easy theming
+const background_color = drawing.Colors.white;
+const foreground_color = drawing.Colors.black;
+const outline_color = drawing.Pixel{ .int = 0xffcccccc };
 
 pub const Vector2 = struct {
     x: f32,
     y: f32,
 };
 
+/// Global state
 pub const State = struct {
+    /// A debug console allowing dumping formatted text output to screen. Rendered, thus providing a
+    /// simple way to output data even on devices which doesn't render con_out
     console: DebugConsole(20) = .{
         .bg = drawing.Colors.white,
         .fg = drawing.Colors.black,
     },
-    activeElement: u32 = 0, // Used e.g. for tab activity
+    /// Used e.g. for tab activity or otherwise communicating an active element - e.g. a button being pressed. TBD
+    activeElement: u32 = 0,
+    /// Computationally heavy slides may choose to render to a low res bitmap, then scale up to backbuffer <- the efficiency of this is debatable. Might remove.
     lowres: drawing.Bitmap,
+    /// Backbuffer allowing us to render an entire frame before copying to videobuffer. Same size as video buffer.
     backbuffer: drawing.Bitmap,
+    /// Wrapper for the actual video buffer
     screen: drawing.Bitmap,
-    // showDebugConsole: bool = false,
+    /// The total time since start of rendering
     globalT: f32 = 0,
+    /// The total time spent within current frame
     frameT: f32 = 0,
     slideIdx: usize = 0,
+    /// A convenience-unit to render consistent sizes across resolutions. E.g. window.width / 100 will make the base unit 1pct of window width
+    unit: f32 = 0,
     firstFrame: bool = false,
     // displaySize: Vector2 = .{ 0, 0 },
     pointerPos: Vector2 = .{ .x = 0, .y = 0 },
     event: ?Event = null,
-    // rendermode: scale up | backbuffer | raw (assumes screen is directly manipulated, do nothing)
+    // rendermode: scale up | backbuffer | raw (assumes screen is directly manipulated, do nothing). Currently leaving it the slide-renderer to use lowres-buffer if desired
 };
 
 pub const EventType = enum {
     none,
     key_down,
-    // key_up,
-    // pointer_down,
-    // pointer_up,
-    // pointer_move,
     pointer,
 };
 
@@ -54,13 +65,6 @@ pub const Event = union(EventType) {
         left: bool = false,
         right: bool = false,
     },
-    // Currently not solved. May not be possible without proper driver
-    // key_up: struct {
-    //     keyCode: u16,
-    // },
-    // TBD: not have point down/up/move as separate events, but part of a common pointer?
-    // pointer_down: void,
-    // pointer_up: void,
     pointer: struct {
         left: bool = false,
         right: bool = false,
@@ -71,6 +75,7 @@ pub const Event = union(EventType) {
 
 pub const SlideResult = enum {
     running,
+    /// If set, the slide manager will automatically move on the next slide in the list.
     finished,
 };
 
@@ -93,38 +98,51 @@ fn createPointerBitmap(alloc: std.mem.Allocator) !drawing.Bitmap {
 
 var pointerBitmap: drawing.Bitmap = undefined;
 
-fn slide2(state: *State, td: f32) SlideResult {
+fn slideBasicPointer(state: *State, td: f32) SlideResult {
     _ = td;
-    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
-    const size: u16 = 16 + @as(u16, @intFromFloat(16 * @abs(@sin(state.globalT))));
-
-    _ = drawing.drawStringOutlined(state.backbuffer, 100, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.red, 2, size, "Slide 2");
+    const pointer_size = 24;
 
     if (state.firstFrame) {
+        drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
+        // const size: u16 = 16 + @as(u16, @intFromFloat(16 * @abs(@sin(state.globalT))));
+
+        _ = drawing.drawStringOutlined(state.backbuffer, 100, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.red, 2, @intFromFloat(state.unit * 1.5), "Pointer");
+
         pointerBitmap = createPointerBitmap(uefi.pool_allocator) catch unreachable;
         drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + 24, state.pointerPos.y + 24);
     }
 
-    // Handle pointer
-    if (state.event) |event| {
-        switch (event) {
-            .pointer => |p| {
-                drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + 24, state.pointerPos.y + 24);
-                state.pointerPos.x += p.x;
-                state.pointerPos.y += p.y;
-                drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + 24, state.pointerPos.y + 24);
-            },
-            else => {},
-        }
-    }
+    // Slide specific event handling
+    if (state.event) |event| switch (event) {
+        // Handle pointer event
+        .pointer => |p| {
+            drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + pointer_size, state.pointerPos.y + pointer_size);
+            state.pointerPos.x = std.math.clamp(state.pointerPos.x + p.x, 0, state.backbuffer.width - pointer_size);
+            state.pointerPos.y = std.math.clamp(state.pointerPos.y + p.y, 0, state.backbuffer.height - pointer_size);
+            drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + 24, state.pointerPos.y + 24);
+        },
+        // Ignore all others
+        else => {},
+    };
 
     return .running;
 }
 
-fn slideShader(state: *State, dt: f32) SlideResult {
+fn slideShaderSineWave(state: *State, dt: f32) SlideResult {
     _ = dt;
-    Shaders.renderShader(state.lowres, state.globalT, Shaders.shaderRadialPlasma);
-    drawing.bltBitmapScaled(state.backbuffer, state.lowres, 0, 0, state.backbuffer.width, state.backbuffer.height);
+    Shaders.renderScalar(Shaders.shaderSineWaveStripes, state.backbuffer, state.globalT * 3);
+    return .running;
+}
+
+fn slideShaderCheckerboard(state: *State, dt: f32) SlideResult {
+    _ = dt;
+    Shaders.renderScalar(Shaders.shaderCheckerboard, state.backbuffer, state.globalT * 3);
+    return .running;
+}
+
+fn slideShaderRadialPlasma(state: *State, dt: f32) SlideResult {
+    _ = dt;
+    Shaders.renderScalar(Shaders.shaderRadialPlasma, state.backbuffer, state.globalT * 3);
     return .running;
 }
 
@@ -179,15 +197,16 @@ fn toF32(value: anytype) f32 {
     return @floatFromInt(value);
 }
 
-/// Will check any relevant events and provide a normalized, easily actionable definition
-/// Currently a quite raw normalization - intended to allow the slide handlers to implement their own logics
-/// In a proper system this step would likely normalize events to high level application actions
+/// Stores retrieved instances to the separate protocols we are interested to check event data for
 const ProtocolInstances = struct {
     simpleTextInputEx: ?*uefi.protocol.SimpleTextInputEx = null,
     simpleTextInput: ?*uefi.protocol.SimpleTextInput = null,
     simplePointer: ?*uefi.protocol.SimplePointer = null,
 };
 
+/// Will check any relevant events and provide a normalized, easily actionable definition
+/// Currently a quite raw normalization - intended to allow the slide handlers to implement their own logics
+/// In a proper system this step would likely normalize events to high level application actions
 fn checkEvents(state: *State, events: []const uefi.Event, instances: *const ProtocolInstances) Event {
     const result = uefi.system_table.boot_services.?.waitForEvent(events) catch {
         // TODO: accept state so we can write info to console?
@@ -197,19 +216,14 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
 
     const event_idx = result.@"1";
     switch (event_idx) {
+        // Checking first for simpleTextInputEx (as it has more details), falls back to simpleTextInput
         0 => {
             if (instances.simpleTextInputEx) |stix| {
                 const key = stix.readKeyStroke() catch {
                     state.console.write("stix.readKeyStroke() error", .{});
                     return .{ .none = {} };
                 };
-                // Uncomment this to show more info of the incoming data
-                // state.console.write("key: scan: {d}, unicode: {d}, ctrl: {}, shift: {}", .{
-                //     key.input.scan_code,
-                //     key.input.unicode_char,
-                //     key.state.shift.left_control_pressed,
-                //     key.state.shift.shift_state_valid,
-                // });
+
                 return .{ .key_down = .{
                     .keyCode = key.input.unicode_char,
                     .scanCode = key.input.scan_code,
@@ -230,6 +244,7 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
             }
             return .{ .none = {} };
         },
+        // Checks for SimplePointer
         1 => {
             // pointer
             if (instances.simplePointer) |sp| {
@@ -241,41 +256,99 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
                 return .{ .pointer = .{
                     .left = key.left_button,
                     .right = key.right_button,
-                    .x = toF32(key.relative_movement_x) / toF32(sp.mode.resolution_x) * 5,
-                    .y = toF32(key.relative_movement_y) / toF32(sp.mode.resolution_y) * 5,
+                    .x = 2.0 * toF32(key.relative_movement_x) / toF32(sp.mode.resolution_x),
+                    .y = 2.0 * toF32(key.relative_movement_y) / toF32(sp.mode.resolution_y),
                 } };
             }
             return .{ .none = {} };
         },
+        // Do nothing - this is the animation timer
         2 => {
-            // animation frame timer
             return .{ .none = {} };
         },
         else => {
             return .{ .none = {} };
         },
     }
-
-    // return .{ .none = {} };
 }
 
-var title_bitmap: drawing.Bitmap = .empty;
+const SlideIntroData = struct {
+    title_bitmap: drawing.Bitmap = .empty,
+    x: f32 = 0,
+    y: f32 = 0,
+};
+var slideIntroData = SlideIntroData{};
 fn slideIntro(state: *State, td: f32) SlideResult {
-    _ = td;
-    if (state.firstFrame) {
-        title_bitmap = drawing.bitmapCreate(uefi.pool_allocator, drawing.textWidth("Applications", 48), 130) catch unreachable;
-        drawing.bitmapFill(title_bitmap, drawing.Colors.black);
-        _ = drawing.drawStringOutlined(title_bitmap, 12, 2, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.white, 2, 48, "Bootable");
-        _ = drawing.drawStringOutlined(title_bitmap, 2, 48, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.white, 2, 48, "Applications");
-        _ = drawing.drawStringOutlined(title_bitmap, 2, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.white, 1, 16, "- fully interactive programs");
-        // _ = drawing.drawStringOutlined(title_bitmap, 32, 120, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.white, 2, 16, "programs");
-    }
-
     drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
-    drawing.bltBitmapScaled(state.backbuffer, title_bitmap, 10, 10, 550, 280);
+    state.console.write("backbuffer: {d},{d} (stride: {d})", .{ state.backbuffer.width, state.backbuffer.height, state.backbuffer.stride });
+    // if (state.firstFrame) {
+    // 90x20 pct
+    // title_bitmap = drawing.bitmapCreate(uefi.pool_allocator, state.unit * 90, state.unit * 20) catch unreachable;
+    // drawing.bitmapFill(title_bitmap, drawing.Colors.black);
+    const w1 = drawing.drawStringOutlined(
+        state.backbuffer,
+        5 * state.unit,
+        1 * state.unit,
+        drawing.Colors.transparent,
+        drawing.Colors.black,
+        drawing.Colors.white,
+        2,
+        @intFromFloat(6 * state.unit),
+        "Bootable",
+    );
+    state.console.write("Bootable: {d},{d}. Width: {d}", .{ 5 * state.unit, 1 * state.unit, w1 });
+
+    const w2 = drawing.drawStringOutlined(
+        state.backbuffer,
+        1 * state.unit,
+        6.5 * state.unit,
+        drawing.Colors.transparent,
+        drawing.Colors.black,
+        drawing.Colors.white,
+        2,
+        @intFromFloat(4 * state.unit),
+        "Applications",
+    );
+    state.console.write("Applications: {d},{d}. Width: {d}", .{ 1 * state.unit, 6.5 * state.unit, w2 });
+
+    const w3 = drawing.drawStringOutlined(
+        state.backbuffer,
+        1 * state.unit,
+        13 * state.unit,
+        drawing.Colors.transparent,
+        drawing.Colors.black,
+        drawing.Colors.white,
+        1,
+        @intFromFloat(3 * state.unit),
+        "- fully interactive programs",
+    );
+    state.console.write("fully etc: {d},{d}. Width: {d}", .{ 1 * state.unit, 13 * state.unit, w3 });
+    // }
+
+    // TODO: Support passing rendering sizes/areas a unions of pos+size as well as start-end coordinate pairs
+    // drawing.bltBitmapScaled(state.backbuffer, title_bitmap, state.unit, state.unit, 91 * state.unit, 21 * state.unit);
+    // drawing.drawCircle(state.backbuffer, slideIntroData.x, slideIntroData.y, state.unit, state.unit, drawing.Colors.green);
+    const box_size = 4 * state.unit;
+    drawing.drawBox(state.backbuffer, slideIntroData.x, slideIntroData.y, box_size, box_size, drawing.Colors.green, 1);
+    // _ = td;
+    slideIntroData.x = std.math.clamp(slideIntroData.x + td * 160, 0, state.backbuffer.width - box_size);
+    slideIntroData.y = std.math.clamp(slideIntroData.y + td * 80, 0, state.backbuffer.height - box_size);
+    // state.console.write("c: {}, {}", .{ slideIntroData.x, slideIntroData.y });
     return .running;
 }
 
+const slides = [_]*const fn (*State, f32) SlideResult{
+    slideIntro,
+    @import("talk-slides/slide1.zig").slide,
+    slideBasicPointer,
+    slideShaderCheckerboard,
+    slideShaderRadialPlasma,
+    slideShaderSineWave,
+};
+
+/// Main entry point - allocates all main resources, multiple levels of bitmaps for lowres rendering and backbuffer handling.
+/// Sets up all event handling and implemnts basically a game loop: check events -> update state -> render
+/// Each "slide" is responsible for putting the state.backbuffer in the desired state, then the main loop is responsible for transferring it to the video buffer
 pub fn main() uefi.Status {
     const boot_services = uefi.system_table.boot_services orelse unreachable;
 
@@ -290,9 +363,12 @@ pub fn main() uefi.Status {
         .backbuffer = drawing.bitmapCreate(uefi.pool_allocator, screen.width, screen.height) catch unreachable,
         .screen = screen,
         .pointerPos = .{ .x = 100, .y = 100 },
+        .unit = @floor(screen.width / 100),
         // .showDebugConsole = false,
         .slideIdx = 0,
     };
+
+    state.console.write("screen: {d}x{d} ({d} stride)", .{ screen.width, screen.height, screen.stride });
 
     drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
 
@@ -350,14 +426,14 @@ pub fn main() uefi.Status {
     // Setup slides
     state.slideIdx = 0;
     state.firstFrame = true;
-    const slides = [_]*const fn (*State, f32) SlideResult{
-        slideShader,
-        slideIntro,
-        @import("talk-slides/slide1.zig").slide,
-        slide2,
-    };
 
     var show_debug: bool = false;
+
+    // We don't check actual time, we assume each step is the target framerate interval
+    const td = 1.0 / @as(f32, @floatFromInt(fps)); // *hackety-hack*
+
+    state.console.write("unit: {d}", .{state.unit});
+    state.console.write("Starting main loop", .{});
 
     // "Game loop"
     while (true) {
@@ -366,13 +442,16 @@ pub fn main() uefi.Status {
         const event = checkEvents(&state, events[0..], &protocolInstances);
         if (event != .none) {
             state.console.write("event: {}", .{event});
-            state.console.write("...", .{});
             state.event = event;
+        } else {
+            state.event = null;
         }
-        // TODO: Make event into action? e.g. .slide_next, .slide_prev, .quit
+
+        // TBD: Make event into action? e.g. .slide_next, .slide_prev, .quit
+        // Global event handling, regardless of active slide
         switch (event) {
             .key_down => |k| {
-                if (k.ctrl) {
+                if (k.ctrl or !k.ctrl) {
                     switch (k.keyCode) {
                         'd' => show_debug = !show_debug,
                         'b' => {
@@ -399,13 +478,13 @@ pub fn main() uefi.Status {
             else => {},
         }
 
-        const td = 1.0 / 30.0; // *hackety-hack*
         state.globalT += td;
         state.frameT += td;
 
-        // Update state
+        // Update state - including the backbuffer
         const slideResult = slides[state.slideIdx](&state, td);
         state.firstFrame = false;
+
         // Change slide logics - placeholder
         switch (slideResult) {
             .running => {},
@@ -418,8 +497,8 @@ pub fn main() uefi.Status {
         // Render debug console
         if (show_debug) {
             state.console.render(state.backbuffer, .{
-                .x = 0,
-                .w = state.backbuffer.width,
+                .x = 10,
+                .w = state.backbuffer.width - 20,
                 .y = state.backbuffer.height - state.backbuffer.height / 2,
                 .h = state.backbuffer.height / 2,
             }, @intFromFloat(state.backbuffer.width / 100));
@@ -428,7 +507,6 @@ pub fn main() uefi.Status {
         // Render to screen
         drawing.bltToScreen(gfx_out, state.backbuffer, 0, 0);
     }
-    utils.hangForKey(13);
 
     return .success;
 }

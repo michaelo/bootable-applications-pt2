@@ -124,8 +124,8 @@ pub fn drawBoxFilled(target: Bitmap, x: f32, y: f32, width: f32, height: f32, bg
 /// Att! Current signature matches drawBox (e.g. assumes upper left corner + dimensions) - but currently only cares about width for radius
 /// TODO: make support any ellipsis
 pub fn drawCircle(target: Bitmap, x0: f32, y0: f32, width: f32, height: f32, color: Pixel) void {
-    const xc = x0 + @floor(width / 2);
-    const yc = y0 + @floor(height / 2);
+    const xc = @round(x0 + @floor(width / 2));
+    const yc = @round(y0 + @floor(height / 2));
 
     const r = @floor((width - 1) / 2);
     var t1 = @floor(r / 16);
@@ -193,6 +193,7 @@ pub fn bitmapFromScreenbuffer(gfx_out: *uefi.protocol.GraphicsOutput) Bitmap {
         .width = @floatFromInt(gfx_out.mode.info.horizontal_resolution),
         .height = @floatFromInt(gfx_out.mode.info.vertical_resolution),
         .stride = @floatFromInt(gfx_out.mode.info.pixels_per_scan_line),
+        // .stride = @floatFromInt(gfx_out.mode.info.pixels_per_scan_line) / @sizeOf(BltPixel),
         .buffer = @as([*]BltPixel, @ptrFromInt(gfx_out.mode.frame_buffer_base)),
     };
 }
@@ -260,6 +261,29 @@ pub fn bltBitmapScaled(target: Bitmap, source: Bitmap, x_start: f32, y_start: f3
     }
 }
 
+test "bltBitmapScaled" {
+    // Test stretching 2x1 to 4x2
+    const source = try bitmapCreate(std.testing.allocator, 2, 1);
+    defer source.free(std.testing.allocator);
+
+    const target = try bitmapCreate(std.testing.allocator, 4, 3);
+    defer target.free(std.testing.allocator);
+
+    // white blue
+    source.buffer[0] = Colors.white.argb;
+    source.buffer[1] = Colors.blue.argb;
+
+    bitmapFill(target, Colors.black);
+
+    bltBitmapScaled(target, source, 0, 0, 4, 2);
+
+    try expectBitmap(&[_]BltPixel{
+        Colors.white.argb, Colors.white.argb, Colors.blue.argb,  Colors.blue.argb,
+        Colors.white.argb, Colors.white.argb, Colors.blue.argb,  Colors.blue.argb,
+        Colors.black.argb, Colors.black.argb, Colors.black.argb, Colors.black.argb,
+    }, target);
+}
+
 pub fn bltBitmapXor(target: Bitmap, source: Bitmap, x_start: f32, y_start: f32, x_end: f32, y_end: f32) void {
     const x_scale: f32 = (x_end - x_start) / source.width;
     const y_scale: f32 = (y_end - y_start) / source.height;
@@ -282,29 +306,6 @@ pub fn bltBitmapXor(target: Bitmap, source: Bitmap, x_start: f32, y_start: f32, 
             target_buffer[tidx].int ^= source_buffer[sidx].int;
         }
     }
-}
-
-test "bltBitmapScaled" {
-    // Test stretching 2x1 to 4x2
-    const source = try bitmapCreate(std.testing.allocator, 2, 1);
-    defer source.free(std.testing.allocator);
-
-    const target = try bitmapCreate(std.testing.allocator, 4, 3);
-    defer target.free(std.testing.allocator);
-
-    // white blue
-    source.buffer[0] = Colors.white.argb;
-    source.buffer[1] = Colors.blue.argb;
-
-    bitmapFill(target, Colors.black);
-
-    bltBitmapScaled(target, source, 0, 0, 4, 2);
-
-    try expectBitmap(&[_]BltPixel{
-        Colors.white.argb, Colors.white.argb, Colors.blue.argb,  Colors.blue.argb,
-        Colors.white.argb, Colors.white.argb, Colors.blue.argb,  Colors.blue.argb,
-        Colors.black.argb, Colors.black.argb, Colors.black.argb, Colors.black.argb,
-    }, target);
 }
 
 pub fn drawPlotToBitmap(comptime W: usize, comptime H: usize, comptime ClutSize: usize, bitmap: Bitmap, plot: [H][W]u8, clut: [ClutSize]Pixel) void {
@@ -486,12 +487,17 @@ test "drawChar size=16" {
     }, buffer);
 }
 
+pub fn textWidth(text: []const u8, size: u16) f32 {
+    return @as(f32, @floatFromInt(text.len)) * size;
+}
+
 /// Renders a sequence of fixed-width characters
 pub fn drawString(bitmap: Bitmap, dx: f32, dy: f32, bg: Pixel, fg: Pixel, size: u16, text: []const u8) f32 {
+    const y = @round(dy);
     const sizef: f32 = @floatFromInt(size);
     for (text, 0..) |c, cidx| {
-        const x = dx + sizef * @as(f32, @floatFromInt(cidx));
-        drawChar(bitmap, x, dy, bg, fg, size, c);
+        const x = @round(dx + sizef * @as(f32, @floatFromInt(cidx)));
+        drawChar(bitmap, x, y, bg, fg, size, c);
     }
     return @as(f32, @floatFromInt(text.len)) * sizef;
 }

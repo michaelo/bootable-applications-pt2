@@ -7,12 +7,18 @@ const uefi = std.os.uefi;
 const utils = @import("lib/utils.zig");
 
 pub fn main() uefi.Status {
-    // _ = init;
-    const con_out = uefi.system_table.con_out.?;
+    // system_table.con_out is a convenience-reference to a EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL instance (if found)
+    // Manual lookup will look something like: (error handling be damned)
+    const con_out = uefi.system_table.boot_services.?
+        .locateProtocol(uefi.protocol.SimpleTextOutput, null) catch null orelse unreachable;
+    // const con_out = uefi.system_table.con_out.?;
     con_out.reset(false) catch {};
     con_out.setCursorPosition(2, 2) catch {};
-    _ = con_out.outputString(utils.W("Hello!\r\n")) catch {};
 
+    // UEFI works with wide (UTF-16) strings, (stdlib has convenient functions to convert UTF8->UTF16)
+    _ = con_out.outputString(&[_:0]u16{ 'H', 'e', 'l', 'l', 'o', 0 }) catch {};
+
+    // Ignore this for now
     utils.hangForKey(13);
 
     return .success;
