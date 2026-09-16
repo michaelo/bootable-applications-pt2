@@ -39,7 +39,12 @@ The flashusb-scripts also takes the device to flash as a second argument (e.g. `
 
 Recommended reading
 ---
-* ...
+* [UEFI specification](https://uefi.org/specifications) - The formal spec
+* [wiki.osdev.org](http://wiki.osdev.org/UEFI) - Lots of great knowledge
+* [TianoCore / EDK II - “EFI Development Kit”](https://www.tianocore.org/) / [source](https://github.com/tianocore/edk2)  - Reference-impl by Intel OVMF is borrowed from this
+* Other interface implementations:
+    * [uefi-simple](https://github.com/pbatard/uefi-simple)
+    * [lil_uefi by Allen Webster and Ryan Fleury](https://handmade.network/p/308/lil-uefi/)
 
 
 Thanks / credits

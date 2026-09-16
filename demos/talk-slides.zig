@@ -272,73 +272,8 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
     }
 }
 
-const SlideIntroData = struct {
-    title_bitmap: drawing.Bitmap = .empty,
-    x: f32 = 0,
-    y: f32 = 0,
-};
-var slideIntroData = SlideIntroData{};
-fn slideIntro(state: *State, td: f32) SlideResult {
-    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
-    state.console.write("backbuffer: {d},{d} (stride: {d})", .{ state.backbuffer.width, state.backbuffer.height, state.backbuffer.stride });
-    // if (state.firstFrame) {
-    // 90x20 pct
-    // title_bitmap = drawing.bitmapCreate(uefi.pool_allocator, state.unit * 90, state.unit * 20) catch unreachable;
-    // drawing.bitmapFill(title_bitmap, drawing.Colors.black);
-    const w1 = drawing.drawStringOutlined(
-        state.backbuffer,
-        5 * state.unit,
-        1 * state.unit,
-        drawing.Colors.transparent,
-        drawing.Colors.black,
-        drawing.Colors.white,
-        2,
-        @intFromFloat(6 * state.unit),
-        "Bootable",
-    );
-    state.console.write("Bootable: {d},{d}. Width: {d}", .{ 5 * state.unit, 1 * state.unit, w1 });
-
-    const w2 = drawing.drawStringOutlined(
-        state.backbuffer,
-        1 * state.unit,
-        6.5 * state.unit,
-        drawing.Colors.transparent,
-        drawing.Colors.black,
-        drawing.Colors.white,
-        2,
-        @intFromFloat(4 * state.unit),
-        "Applications",
-    );
-    state.console.write("Applications: {d},{d}. Width: {d}", .{ 1 * state.unit, 6.5 * state.unit, w2 });
-
-    const w3 = drawing.drawStringOutlined(
-        state.backbuffer,
-        1 * state.unit,
-        13 * state.unit,
-        drawing.Colors.transparent,
-        drawing.Colors.black,
-        drawing.Colors.white,
-        1,
-        @intFromFloat(3 * state.unit),
-        "- fully interactive programs",
-    );
-    state.console.write("fully etc: {d},{d}. Width: {d}", .{ 1 * state.unit, 13 * state.unit, w3 });
-    // }
-
-    // TODO: Support passing rendering sizes/areas a unions of pos+size as well as start-end coordinate pairs
-    // drawing.bltBitmapScaled(state.backbuffer, title_bitmap, state.unit, state.unit, 91 * state.unit, 21 * state.unit);
-    // drawing.drawCircle(state.backbuffer, slideIntroData.x, slideIntroData.y, state.unit, state.unit, drawing.Colors.green);
-    const box_size = 4 * state.unit;
-    drawing.drawBox(state.backbuffer, slideIntroData.x, slideIntroData.y, box_size, box_size, drawing.Colors.green, 1);
-    // _ = td;
-    slideIntroData.x = std.math.clamp(slideIntroData.x + td * 160, 0, state.backbuffer.width - box_size);
-    slideIntroData.y = std.math.clamp(slideIntroData.y + td * 80, 0, state.backbuffer.height - box_size);
-    // state.console.write("c: {}, {}", .{ slideIntroData.x, slideIntroData.y });
-    return .running;
-}
-
 const slides = [_]*const fn (*State, f32) SlideResult{
-    slideIntro,
+    @import("talk-slides/slideIntro.zig").slide,
     @import("talk-slides/slide1.zig").slide,
     slideBasicPointer,
     slideShaderCheckerboard,
