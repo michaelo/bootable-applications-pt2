@@ -55,9 +55,10 @@
                     </li>
                     <li>New this round:
                         <ul>
-                            <li>More protocols</li>
+                            <li>Deeper look on protocols</li>
                             <li>Greater compositions</li>
-                            <li>Switched to zig</li>
+                            <li>Zig - but not important</li>
+                            <li>Blurring the edges between UEFI and playing around</li>
                             <li>Less time spent on tooling</li>
                         </ul>
                     </li>
@@ -68,9 +69,6 @@
                     <img src="resources/yt-ba-introduction-thumb.png">
                     <img src="resources/qr-ba-ai.svg" style="width: 80%;">
                 </div>
-            </div>
-            <div class="slide layout-title">
-                <h1>Why...</h1>
             </div>
             <div class="slide cols-2-weighted">
                 <div>
@@ -90,23 +88,52 @@
                     <img src="resources/logo-gnu.svg">
                 </div>
             </div>
+            <div class="slide layout-title stack centered">
+                <div class="stack-slide">
+                    <h1>Why...</h1>
+                </div>
+                <div class="stack-slide">
+                    <h1>Fun</h1>
+                </div>
+                <div class="stack-slide">
+                    <h1>But also</h1>
+                    <!-- <h2>Usability</h2> -->
+                </div>
+            </div>
             <div class="slide">
                 <h2>A brief summary of UEFI</h2>
                 <ul>
-                    <li>Unified Extensible Firmware Interface</li>
-                    <li>"EFI" by Intel as BIOS for multiple CPU-architectures</li>
-                    <li>"UEFI" @ 19xx - many contributers, adopters since:<br />
-                    AMD, Apple, ARM, Intel, NVIDIA, Cisco, Qualcomm</li>
+                    <li><ins>U</ins>nified <ins>E</ins>xtensible <ins>F</ins>irmware <ins>I</ins>nterface</li>
+                    <li>Late '90s: "EFI" by Intel – BIOS for multiple CPU-architectures</li>
+                    <li>2005->: "UEFI" - many contributers and adopters since:<br />
+                    AMD, Apple, ARM, NVIDIA, Cisco, Qualcomm, ++++</li>
                     <li>Well specified, quite well supported</li>
-                    <li>Consists of a basic entrypoint allowing probing system capabilities</li>
+                    <li>Consists of a basic entrypoint allowing probing system capabilities through structs and function pointers</li>
                     <li>"Protocols"
                         <ul>
                             <li>Simple Text Input</li>
                             <li>Simple Text Output</li>
                             <li>Graphics Out</li>
+                            <li>...</li>
                         </ul>
                     </li>
                 </ul>
+            </div>
+            <div class="slide stack">
+                
+                <div class="stack-slide layout-title centered bg-image" bg="resources/profit.jpg">
+                    <h1>Anathomy of a UEFI application</h1>
+                </div>
+                <div class="stack-slide">
+                    <h2>The scaffold</h2>
+                </div>
+                <div class="stack-slide">
+                    <h2>Access/probe something useful</h2>
+                </div>
+                <div class="stack-slide">
+                    <h2>Do things!</h2>
+                </div>
+                
             </div>
             <div class="slide layout-title centered">
                 <h1>Let's throw away some code!</h1>
@@ -122,6 +149,17 @@
                 <div class="stack-slide">
                     Demo step 3
                 </div>
+            </div>
+            <div class="slide">
+                <h2>Where to next?</h2>
+                <ul>
+                    <!-- <li>Skip real time compilation, flashing etc and make entire presentation bootable?</li> -->
+                    <li>Expand on protocols? Bluetooth, networking, ...</li>
+                    <li>Extend on handover to proper OS</li>
+                    <li>Explore bootability on other devices? Mobile, Apple Silicon, etc</li>
+                </ul>
+                <p><br /></p>
+                <p>Let me know any thoughts and ideas!</p>
             </div>
             <div class="slide layout-title cols-2-weighted">
                 <h1>Questions?</h1>

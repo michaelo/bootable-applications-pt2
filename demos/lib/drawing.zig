@@ -493,11 +493,16 @@ pub fn textWidth(text: []const u8, size: u16) f32 {
 
 /// Renders a sequence of fixed-width characters
 pub fn drawString(bitmap: Bitmap, dx: f32, dy: f32, bg: Pixel, fg: Pixel, size: u16, text: []const u8) f32 {
-    const y = @round(dy);
     const sizef: f32 = @floatFromInt(size);
-    for (text, 0..) |c, cidx| {
-        const x = @round(dx + sizef * @as(f32, @floatFromInt(cidx)));
-        drawChar(bitmap, x, y, bg, fg, size, c);
+    var line_it = std.mem.splitAny(u8, text, "\n");
+    var line_idx: usize = 0;
+    while (line_it.next()) |line| {
+        const y = @round(dy + @as(f32, @floatFromInt(line_idx)) * size);
+        for (line, 0..) |c, cidx| {
+            const x = @round(dx + sizef * @as(f32, @floatFromInt(cidx)));
+            drawChar(bitmap, x, y, bg, fg, size, c);
+        }
+        line_idx += 1;
     }
     return @as(f32, @floatFromInt(text.len)) * sizef;
 }

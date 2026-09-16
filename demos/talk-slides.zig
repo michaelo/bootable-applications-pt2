@@ -187,10 +187,82 @@ const Button = struct {
 //     // immediate mode style?
 // }
 
-fn slideFinal(state: *State, td: f32) SlideResult {
-    // Shows the final slide: QR to repo + final greeting
+fn slideWhereToNow(state: *State, td: f32) SlideResult {
     _ = state;
     _ = td;
+
+    return .running;
+}
+
+fn slideQuestions(state: *State, td: f32) SlideResult {
+    _ = td;
+
+    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
+    const string = "Questions?";
+    const text_size: u16 = @intFromFloat(@round(5 * state.unit));
+
+    const stringLength = drawing.textWidth(string, text_size);
+
+    // TODO: have float up and down? Sine?
+    _ = drawing.drawStringOutlined(state.backbuffer, (state.backbuffer.width - stringLength) / 2, ((state.backbuffer.height - text_size) / 2) - 4 * state.unit * @sin(2 * state.globalT), drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.white, 0.5 * state.unit, text_size, string);
+
+    return .running;
+}
+
+var finalQrBitmap = drawing.Bitmap.empty;
+fn slideFinal(state: *State, td: f32) SlideResult {
+    // Shows the final slide: QR to repo + final greeting
+    _ = td;
+
+    if (finalQrBitmap.width == 0) {
+        finalQrBitmap = drawing.bitmapCreate(uefi.pool_allocator, 33, 33) catch unreachable;
+        drawing.drawPlotToBitmap(
+            33,
+            33,
+            2,
+            finalQrBitmap,
+            @import("talk-slides/slideIntro.zig").qr_plot,
+            [2]drawing.Pixel{ drawing.Colors.black, drawing.Colors.white },
+        );
+    }
+
+    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
+
+    _ = drawing.drawStringOutlined(
+        state.backbuffer,
+        2 * state.unit,
+        20 * state.unit,
+        drawing.Colors.transparent,
+        drawing.Colors.black,
+        drawing.Colors.white,
+        0.5 * state.unit,
+        @intFromFloat(@round(5 * state.unit)),
+        "That's all,\nfolks!",
+    );
+
+    _ = drawing.drawStringOutlined(
+        state.backbuffer,
+        2 * state.unit,
+        40 * state.unit,
+        drawing.Colors.transparent,
+        drawing.Colors.black,
+        drawing.Colors.white,
+        0.2 * state.unit,
+        @intFromFloat(@round(3 * state.unit)),
+        "Now go do something\ngood fun!",
+        // g̵o̵o̵d̵
+    );
+
+    drawing.bltBitmapScaled(
+        state.backbuffer,
+        finalQrBitmap,
+        60 * state.unit,
+        20 * state.unit,
+        95 * state.unit,
+        55 * state.unit,
+    );
+
+    return .running;
 }
 
 fn toF32(value: anytype) f32 {
@@ -272,13 +344,100 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
     }
 }
 
+fn slideSelectRes(state: *State, td: f32) SlideResult {
+    const boot_services = uefi.system_table.boot_services.?;
+    _ = td;
+
+    // Query modes
+    // Look up handlers for all devices of gfxout protocol
+    const gfx_out_handlers: []uefi.Handle = @ptrCast(boot_services.locateHandleBuffer(.{ .by_protocol = &uefi.protocol.GraphicsOutput.guid }) catch null orelse unreachable);
+
+    var scratch8: [128]u8 = undefined;
+    var mode_idx: u32 = 0;
+    var device_idx: usize = 0;
+    var screen = drawing.Bitmap.empty;
+    while (true) {
+        // Get first graphics protocol and set first mode to get any display
+        // Open protocol by handler
+        const gfx_out = boot_services.openProtocol(uefi.protocol.GraphicsOutput, gfx_out_handlers[device_idx], .{ .by_handle_protocol = .{} }) catch null orelse unreachable;
+        gfx_out.setMode(mode_idx) catch unreachable;
+        screen = drawing.bitmapFromScreenbuffer(gfx_out);
+        drawing.bitmapFill(screen, drawing.Colors.black);
+        // TOOD: support formatting and newline
+        _ = drawing.drawString(
+            screen,
+            10.0,
+            @floatFromInt(1 * 16),
+            drawing.Colors.transparent,
+            drawing.Colors.white,
+            16,
+            std.fmt.bufPrint(&scratch8, "L/R to iterate device\nU/D to iterate mode\nEnter when OK.", .{}) catch "...",
+        );
+
+        _ = drawing.drawString(
+            screen,
+            10.0,
+            @floatFromInt(9 * 16),
+            drawing.Colors.transparent,
+            drawing.Colors.white,
+            16,
+            std.fmt.bufPrint(&scratch8, "Device: {d}/{d}, Mode: {d}/{d} - {d}x{d}", .{ device_idx + 1, gfx_out_handlers.len, mode_idx + 1, gfx_out.mode.max_mode, gfx_out.mode.info.horizontal_resolution, gfx_out.mode.info.vertical_resolution }) catch "...",
+        );
+
+        _ = boot_services.waitForEvent(@as([]const uefi.Event, @ptrCast(&uefi.system_table.con_in.?.wait_for_key))) catch continue;
+        const key = uefi.system_table.con_in.?.readKeyStroke() catch continue;
+        switch (key.scan_code) {
+            1 => { // up?
+                mode_idx = if (mode_idx > 0) mode_idx - 1 else 0;
+            },
+            2 => { // down?
+                mode_idx = std.math.clamp(mode_idx + 1, 0, gfx_out.mode.max_mode - 1);
+            },
+            3 => { // right
+                device_idx = std.math.clamp(device_idx + 1, 0, gfx_out_handlers.len - 1);
+                mode_idx = 0;
+            },
+            4 => { // left
+                device_idx = if (device_idx > 0) device_idx - 1 else 0;
+                mode_idx = 0;
+            },
+            else => {},
+        }
+
+        switch (key.unicode_char) {
+            13 => { // enter
+                break;
+            },
+            'l' => {
+                // toggle light/dark mode?
+                // TODO: sett firstframe back to false to trigger regeneration which may contain color references
+            },
+            else => {},
+        }
+    }
+
+    state.screen = screen;
+    // TODO: free previous backbuffer
+    state.backbuffer = drawing.bitmapCreate(uefi.pool_allocator, screen.width, screen.height) catch unreachable;
+    state.unit = screen.width / 100;
+
+    return .finished;
+}
+
 const slides = [_]*const fn (*State, f32) SlideResult{
-    @import("talk-slides/slideIntro.zig").slide,
-    @import("talk-slides/slide1.zig").slide,
-    slideBasicPointer,
-    slideShaderCheckerboard,
-    slideShaderRadialPlasma,
-    slideShaderSineWave,
+    slideSelectRes,
+    // @import("talk-slides/slideIntro.zig").slide,
+    // @import("talk-slides/slide1.zig").slide,
+    // // slideAnimationRaw,
+    // // slideAnimationSmooth,
+    // slideBasicPointer,
+    // // slideUi,
+    // slideShaderCheckerboard,
+    // slideShaderRadialPlasma,
+    // slideShaderSineWave,
+    // slideWhereToNow,
+    slideQuestions,
+    slideFinal,
 };
 
 /// Main entry point - allocates all main resources, multiple levels of bitmaps for lowres rendering and backbuffer handling.
