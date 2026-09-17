@@ -70,24 +70,7 @@
                     <img src="resources/qr-ba-ai.svg" style="width: 80%;">
                 </div>
             </div>
-            <div class="slide cols-2-weighted">
-                <div>
-                <h2>Speaking of tools...</h2>
-                <ul>
-                    <li>qemu</li>
-                    <li>OVMF from EDK II</li>
-                    <li>zig</li>
-                    <li>llvm (bundled with zig)</li>
-                    <li>mtools</li>
-                </ul>
-                </div>
-                <div class="image-list">
-                    <img src="resources/logo-qemu.png">
-                    <img src="resources/logo-zig-mark.svg">
-                    <img src="resources/logo-llvm.png">
-                    <img src="resources/logo-gnu.svg">
-                </div>
-            </div>
+
             <div class="slide layout-title stack centered">
                 <div class="stack-slide">
                     <h1>Why...</h1>
@@ -96,7 +79,7 @@
                     <h1>Fun</h1>
                 </div>
                 <div class="stack-slide">
-                    <h1>But also</h1>
+                    <h1>But also...</h1>
                     <!-- <h2>Usability</h2> -->
                 </div>
             </div>
@@ -120,12 +103,37 @@
                 </ul>
             </div>
             <div class="slide stack">
+                <div class="stack-slide">
+                    <h1>The repository</h1>
+                    <img src="resources/repo-overview.png" alt="Screenshot of the https://github.com/michaelo/bootable-applications-pt2 repository">
+                </div>
+                <div class="stack-slide">
+                    <h2>Design goals</h2>
+                    <ul>
+                        <li>A playing ground to learn UEFI development</li>
+                        <li>A (to-be) collection of
+                            <ul>
+                                <li>minimal examples to explore single protocols - e.g. plot pixels on screen</li>
+                                <li>utility functions/wrappers for higher lever functionality - e.g. text rendering</li>
+                                <li>fully featured games, applications++</li>
+                            </ul>
+                        </li>
+                        <li>Want contributions!</li>
+                    </ul>
+                    <p class="quote bottom">"He's a developer, he is fallible"</p>
+                </div>
+            </div>
+            <div class="slide stack">
                 
                 <div class="stack-slide layout-title centered bg-image" bg="resources/profit.jpg">
                     <h1>Anathomy of a UEFI application</h1>
                 </div>
                 <div class="stack-slide">
-                    <h2>The scaffold</h2>
+                    <h2>Architecture</h2>
+                </div>
+                <div class="stack-slide">
+                    <h2>Basic example</h2>
+                    <img src="resources/uefi/EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL example.png">
                 </div>
                 <div class="stack-slide">
                     <h2>Access/probe something useful</h2>
@@ -133,7 +141,32 @@
                 <div class="stack-slide">
                     <h2>Do things!</h2>
                 </div>
-                
+            </div>
+            <div class="slide stack">
+                <div class="stack-slide layout-title centered">
+                    <h1>From code to execution</h1>
+                </div>
+                <div class="stack-slide cols-2-weighted">
+                    <div>
+                    <h2>Tools...</h2>
+                    <ul>
+                        <li>qemu</li>
+                        <li>OVMF from EDK II</li>
+                        <li>zig</li>
+                        <li>llvm (bundled with zig)</li>
+                        <li>mtools</li>
+                    </ul>
+                    </div>
+                    <div class="image-list">
+                        <img src="resources/logos/logo-qemu.png">
+                        <img src="resources/logos/logo-zig-mark.svg">
+                        <img src="resources/logos/logo-llvm.png">
+                        <img src="resources/logos/logo-gnu.svg">
+                    </div>
+                </div>
+                <div class="stack-slide">
+                    <img src="resources/process.webp" alt="Flowchart depicting the sequence from code, via zig/llvm as compiler to an executable that can either be passed on to QEMU or flashed to USB for direct bootability" >
+                </div>
             </div>
             <div class="slide layout-title centered">
                 <h1>Let's throw away some code!</h1>

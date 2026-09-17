@@ -6,10 +6,39 @@ const drawing = @import("lib/drawing.zig");
 const DebugConsole = @import("talk-slides/debug-console.zig").DebugConsole;
 const Shaders = @import("lib/shaders.zig");
 
+const Pixel = drawing.Pixel;
+const Colors = drawing.Colors;
+
+const slides = [_]*const fn (*State, f32) SlideResult{
+    slideSelectRes,
+    @import("talk-slides/slideIntro.zig").slide,
+    @import("talk-slides/slideImage.zig").slide,
+    // slideAnimationRaw,
+    // slideAnimationSmooth,
+    slideBasicPointer,
+    // slideUi,
+    slideShaderCheckerboard,
+    slideShaderRadialPlasma,
+    slideShaderSineWave,
+    slideWhereToNow,
+    slideQuestions,
+    slideFinal,
+};
+
+const themeDark = Style{
+    .fg_color = drawing.Colors.white,
+    .bg_color = drawing.Colors.black,
+    .outline_color = drawing.Pixel{ .int = 0xff999999 },
+};
+
+const themeLight = Style{
+    .fg_color = drawing.Colors.black,
+    .bg_color = drawing.Colors.white,
+    .outline_color = drawing.Pixel{ .int = 0xffcccccc },
+};
+
 // Default colors to allow easy theming
-const background_color = drawing.Colors.white;
-const foreground_color = drawing.Colors.black;
-const outline_color = drawing.Pixel{ .int = 0xffcccccc };
+pub var defaultStyle: *const Style = &themeLight;
 
 pub const Vector2 = struct {
     x: f32,
@@ -82,34 +111,48 @@ pub const SlideResult = enum {
 fn createPointerBitmap(alloc: std.mem.Allocator) !drawing.Bitmap {
     const pointer_plot: [8][8]u8 = .{
         [_]u8{ 1, 1, 1, 1, 1, 1, 1, 0 },
-        [_]u8{ 1, 1, 1, 1, 1, 1, 0, 0 },
-        [_]u8{ 1, 1, 1, 1, 1, 0, 0, 0 },
-        [_]u8{ 1, 1, 1, 1, 1, 0, 0, 0 },
-        [_]u8{ 1, 1, 1, 1, 1, 1, 0, 0 },
-        [_]u8{ 1, 1, 0, 0, 1, 1, 1, 0 },
-        [_]u8{ 1, 0, 0, 0, 0, 1, 1, 1 },
+        [_]u8{ 1, 2, 2, 2, 2, 1, 0, 0 },
+        [_]u8{ 1, 2, 2, 2, 1, 0, 0, 0 },
+        [_]u8{ 1, 2, 2, 2, 1, 0, 0, 0 },
+        [_]u8{ 1, 2, 1, 1, 2, 1, 0, 0 },
+        [_]u8{ 1, 1, 0, 0, 1, 2, 1, 0 },
+        [_]u8{ 1, 0, 0, 0, 0, 1, 2, 1 },
         [_]u8{ 0, 0, 0, 0, 0, 0, 1, 1 },
     };
 
     const bitmap = try drawing.bitmapCreate(alloc, 8, 8);
-    drawing.drawPlotToBitmap(8, 8, 2, bitmap, pointer_plot, [2]drawing.Pixel{ drawing.Colors.transparent, drawing.Colors.white });
+    drawing.drawPlotToBitmap(8, 8, 3, bitmap, pointer_plot, [_]drawing.Pixel{ Colors.transparent, defaultStyle.outline_color, defaultStyle.fg_color });
     return bitmap;
 }
 
-var pointerBitmap: drawing.Bitmap = undefined;
+var pointerBitmap: drawing.Bitmap = .empty;
 
 fn slideBasicPointer(state: *State, td: f32) SlideResult {
     _ = td;
     const pointer_size = 24;
 
     if (state.firstFrame) {
-        drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
-        // const size: u16 = 16 + @as(u16, @intFromFloat(16 * @abs(@sin(state.globalT))));
+        drawing.bitmapFill(state.backbuffer, defaultStyle.bg_color);
 
-        _ = drawing.drawStringOutlined(state.backbuffer, 100, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.red, 2, @intFromFloat(state.unit * 1.5), "Pointer");
+        _ = drawing.drawStringOutlined(
+            state.backbuffer,
+            1 * state.unit,
+            1 * state.unit,
+            drawing.Colors.transparent,
+            defaultStyle.fg_color,
+            defaultStyle.outline_color,
+            2,
+            @intFromFloat(state.unit * 2),
+            "Example: SimplePointerProtocol",
+        );
 
+        if (pointerBitmap.width > 0) {
+            pointerBitmap.free(uefi.pool_allocator);
+        }
+
+        state.console.write("Recreating pointer", .{});
         pointerBitmap = createPointerBitmap(uefi.pool_allocator) catch unreachable;
-        drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + 24, state.pointerPos.y + 24);
+        drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + pointer_size, state.pointerPos.y + pointer_size);
     }
 
     // Slide specific event handling
@@ -119,7 +162,7 @@ fn slideBasicPointer(state: *State, td: f32) SlideResult {
             drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + pointer_size, state.pointerPos.y + pointer_size);
             state.pointerPos.x = std.math.clamp(state.pointerPos.x + p.x, 0, state.backbuffer.width - pointer_size);
             state.pointerPos.y = std.math.clamp(state.pointerPos.y + p.y, 0, state.backbuffer.height - pointer_size);
-            drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + 24, state.pointerPos.y + 24);
+            drawing.bltBitmapXor(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + pointer_size, state.pointerPos.y + pointer_size);
         },
         // Ignore all others
         else => {},
@@ -163,9 +206,9 @@ pub const Box = struct {
 };
 
 const Style = struct {
-    fg: drawing.Pixel,
-    bg: drawing.Pixel,
-    border: drawing.pixel,
+    fg_color: drawing.Pixel,
+    bg_color: drawing.Pixel,
+    outline_color: drawing.Pixel,
 };
 
 const Button = struct {
@@ -197,14 +240,24 @@ fn slideWhereToNow(state: *State, td: f32) SlideResult {
 fn slideQuestions(state: *State, td: f32) SlideResult {
     _ = td;
 
-    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
+    drawing.bitmapFill(state.backbuffer, defaultStyle.bg_color);
     const string = "Questions?";
     const text_size: u16 = @intFromFloat(@round(5 * state.unit));
 
     const stringLength = drawing.textWidth(string, text_size);
 
     // TODO: have float up and down? Sine?
-    _ = drawing.drawStringOutlined(state.backbuffer, (state.backbuffer.width - stringLength) / 2, ((state.backbuffer.height - text_size) / 2) - 4 * state.unit * @sin(2 * state.globalT), drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.white, 0.5 * state.unit, text_size, string);
+    _ = drawing.drawStringOutlined(
+        state.backbuffer,
+        (state.backbuffer.width - stringLength) / 2,
+        ((state.backbuffer.height - text_size) / 2) - 4 * state.unit * @sin(2 * state.globalT),
+        drawing.Colors.transparent,
+        defaultStyle.fg_color,
+        defaultStyle.outline_color,
+        0.2 * state.unit,
+        text_size,
+        string,
+    );
 
     return .running;
 }
@@ -214,7 +267,7 @@ fn slideFinal(state: *State, td: f32) SlideResult {
     // Shows the final slide: QR to repo + final greeting
     _ = td;
 
-    if (finalQrBitmap.width == 0) {
+    if (state.firstFrame) {
         finalQrBitmap = drawing.bitmapCreate(uefi.pool_allocator, 33, 33) catch unreachable;
         drawing.drawPlotToBitmap(
             33,
@@ -222,20 +275,20 @@ fn slideFinal(state: *State, td: f32) SlideResult {
             2,
             finalQrBitmap,
             @import("talk-slides/slideIntro.zig").qr_plot,
-            [2]drawing.Pixel{ drawing.Colors.black, drawing.Colors.white },
+            [2]drawing.Pixel{ defaultStyle.bg_color, defaultStyle.fg_color },
         );
     }
 
-    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
+    drawing.bitmapFill(state.backbuffer, defaultStyle.bg_color);
 
     _ = drawing.drawStringOutlined(
         state.backbuffer,
         2 * state.unit,
         20 * state.unit,
         drawing.Colors.transparent,
-        drawing.Colors.black,
-        drawing.Colors.white,
-        0.5 * state.unit,
+        defaultStyle.fg_color,
+        defaultStyle.outline_color,
+        0.2 * state.unit,
         @intFromFloat(@round(5 * state.unit)),
         "That's all,\nfolks!",
     );
@@ -245,11 +298,11 @@ fn slideFinal(state: *State, td: f32) SlideResult {
         2 * state.unit,
         40 * state.unit,
         drawing.Colors.transparent,
-        drawing.Colors.black,
-        drawing.Colors.white,
+        defaultStyle.fg_color,
+        defaultStyle.outline_color,
         0.2 * state.unit,
         @intFromFloat(@round(3 * state.unit)),
-        "Now go do something\ngood fun!",
+        "Now go do\nsomething fun!",
         // g̵o̵o̵d̵
     );
 
@@ -265,7 +318,7 @@ fn slideFinal(state: *State, td: f32) SlideResult {
     return .running;
 }
 
-fn toF32(value: anytype) f32 {
+inline fn toF32(value: anytype) f32 {
     return @floatFromInt(value);
 }
 
@@ -328,8 +381,8 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
                 return .{ .pointer = .{
                     .left = key.left_button,
                     .right = key.right_button,
-                    .x = 2.0 * toF32(key.relative_movement_x) / toF32(sp.mode.resolution_x),
-                    .y = 2.0 * toF32(key.relative_movement_y) / toF32(sp.mode.resolution_y),
+                    .x = 4.0 * toF32(key.relative_movement_x) / toF32(sp.mode.resolution_x),
+                    .y = 4.0 * toF32(key.relative_movement_y) / toF32(sp.mode.resolution_y),
                 } };
             }
             return .{ .none = {} };
@@ -344,6 +397,7 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
     }
 }
 
+/// TBD: Rewrite to play well with the main render loop?
 fn slideSelectRes(state: *State, td: f32) SlideResult {
     const boot_services = uefi.system_table.boot_services.?;
     _ = td;
@@ -356,7 +410,7 @@ fn slideSelectRes(state: *State, td: f32) SlideResult {
     var mode_idx: u32 = 0;
     var device_idx: usize = 0;
     var screen = drawing.Bitmap.empty;
-    while (true) {
+    blk: while (true) {
         // Get first graphics protocol and set first mode to get any display
         // Open protocol by handler
         const gfx_out = boot_services.openProtocol(uefi.protocol.GraphicsOutput, gfx_out_handlers[device_idx], .{ .by_handle_protocol = .{} }) catch null orelse unreachable;
@@ -405,12 +459,8 @@ fn slideSelectRes(state: *State, td: f32) SlideResult {
         }
 
         switch (key.unicode_char) {
-            13 => { // enter
-                break;
-            },
-            'l' => {
-                // toggle light/dark mode?
-                // TODO: sett firstframe back to false to trigger regeneration which may contain color references
+            13, 'c' => { // enter, c=continue
+                break :blk;
             },
             else => {},
         }
@@ -418,27 +468,14 @@ fn slideSelectRes(state: *State, td: f32) SlideResult {
 
     state.screen = screen;
     // TODO: free previous backbuffer
+    if (state.backbuffer.width > 0) {
+        state.backbuffer.free(uefi.pool_allocator);
+    }
     state.backbuffer = drawing.bitmapCreate(uefi.pool_allocator, screen.width, screen.height) catch unreachable;
     state.unit = screen.width / 100;
 
     return .finished;
 }
-
-const slides = [_]*const fn (*State, f32) SlideResult{
-    slideSelectRes,
-    // @import("talk-slides/slideIntro.zig").slide,
-    // @import("talk-slides/slide1.zig").slide,
-    // // slideAnimationRaw,
-    // // slideAnimationSmooth,
-    // slideBasicPointer,
-    // // slideUi,
-    // slideShaderCheckerboard,
-    // slideShaderRadialPlasma,
-    // slideShaderSineWave,
-    // slideWhereToNow,
-    slideQuestions,
-    slideFinal,
-};
 
 /// Main entry point - allocates all main resources, multiple levels of bitmaps for lowres rendering and backbuffer handling.
 /// Sets up all event handling and implemnts basically a game loop: check events -> update state -> render
@@ -464,7 +501,7 @@ pub fn main() uefi.Status {
 
     state.console.write("screen: {d}x{d} ({d} stride)", .{ screen.width, screen.height, screen.stride });
 
-    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
+    drawing.bitmapFill(state.backbuffer, defaultStyle.bg_color);
 
     // Setup all event listeners
     // TODO: Limitation when having a time: it's prioritized over e.g. key-events from SimpleTextInput, thus if the frame randering takes longer time than the timeout it will
@@ -561,6 +598,11 @@ pub fn main() uefi.Status {
                             }
                             state.firstFrame = true;
                             state.frameT = 0;
+                        },
+                        'l' => {
+                            // toggle theme
+                            defaultStyle = if (defaultStyle == &themeDark) &themeLight else &themeDark;
+                            state.firstFrame = true;
                         },
                         'q' => {
                             break;

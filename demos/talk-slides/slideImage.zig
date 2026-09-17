@@ -3,7 +3,7 @@ const uefi = std.os.uefi;
 const main = @import("../talk-slides.zig");
 const drawing = @import("../lib/drawing.zig");
 
-const bmp_raw = @embedFile("meg.bmp");
+const bmp_raw = @embedFile("../talk-slides.zig-files/companion-knight-600x800.bmp");
 
 var bmp_bitmap: drawing.Bitmap = .empty;
 pub fn slide(state: *main.State, td: f32) main.SlideResult {
@@ -19,10 +19,10 @@ pub fn slide(state: *main.State, td: f32) main.SlideResult {
 
     drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
 
-    const size: u16 = 16 + @as(u16, @intFromFloat(16 * @abs(@sin(state.globalT))));
-    _ = drawing.drawStringOutlined(state.backbuffer, 100, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.red, 2, size, "Slide 1");
+    // const size: u16 = 16 + @as(u16, @intFromFloat(16 * @abs(@sin(state.globalT))));
+    // _ = drawing.drawStringOutlined(state.backbuffer, 100, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.red, 2, size, "Slide 1");
 
     // drawing.bltBitmapScaled(state.backbuffer, qr_bitmap, 300, 10, 300 + 200, 10 + 200);
-    drawing.bltBitmapScaled(state.backbuffer, bmp_bitmap, 200, 220, 200 + 300, 220 + 300);
+    drawing.bltBitmapScaled(state.backbuffer, bmp_bitmap, 20 * state.unit, 0, state.backbuffer.width - 20 * state.unit, state.backbuffer.height);
     return if (state.frameT > 10) .finished else .running;
 }

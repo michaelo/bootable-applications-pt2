@@ -23,3 +23,10 @@ pub fn hangForKey(keycode: u16) void {
 pub fn getFirstOfProtocolOptimistic(comptime protocol: type) ?*protocol {
     return uefi.system_table.boot_services.?.locateProtocol(protocol, null) catch null orelse null;
 }
+
+fn getVolumeFromImageHandle(handle: uefi.Handle) !*uefi.protocol.File {
+    const bs = uefi.system_table.boot_services orelse return error.Fatal;
+    const loaded_image = try bs.handleProtocol(uefi.protocol.LoadedImage, handle) orelse return error.Fatal;
+    const volume = try bs.handleProtocol(uefi.protocol.SimpleFileSystem, loaded_image.device_handle.?) orelse return error.Fatal;
+    return try volume.openVolume();
+}

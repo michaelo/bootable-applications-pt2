@@ -37,7 +37,6 @@ pub fn DebugConsole(comptime size: usize) type {
             const line_spacing = 2;
             const padding = 2;
 
-            // TODO: Render background
             drawing.drawBoxFilled(bitmap, box.x, box.y, box.w, box.h, self.bg, self.bg, 1);
 
             if (self.len == 0) return;

@@ -95,14 +95,14 @@ pub fn drawBoxFilled(target: Bitmap, x: f32, y: f32, width: f32, height: f32, bg
     const top = y;
     const right = x + width - 1;
     const bottom = y + height - 1;
-    // TODO: Can alternatively solve stroke_width by drawing increasingly smaller boxes
 
-    // TODO: May be
     const x_idx: usize = @intFromFloat(x);
     const x_end_idx: usize = @intFromFloat(x + width);
     var y_idx: usize = @intFromFloat(y);
     const y_end_idx: usize = @intFromFloat(y + height);
     const target_stride: usize = @intFromFloat(target.stride);
+
+    // TBD: use gfxout blt?
     while (y_idx < y_end_idx) : (y_idx += 1) {
         @memset(target.buffer[y_idx * target_stride + x_idx .. y_idx * target_stride + x_end_idx], bg_color.argb);
     }
@@ -233,20 +233,12 @@ pub fn bltBitmapScaled(target: Bitmap, source: Bitmap, x_start: f32, y_start: f3
     const x_scale: f32 = (x_end - x_start) / source.width;
     const y_scale: f32 = (y_end - y_start) / source.height;
 
-    // const y_start_proper: usize = if (y_start < 0) 0 else @intCast(y_start);
-    // const x_start_proper: usize = if (x_start < 0) 0 else @intCast(x_start);
+    // TODO: cap the part that will be outside of viewport?
 
-    // const y_end_scaled: u32 = @intFromFloat(@as(f32, @floatFromInt(y_end)) * y_scale);
-    // const x_end_scaled: u32 = @intFromFloat(@as(f32, @floatFromInt(x_end)) * x_scale);
-
-    // const y_end_proper: usize = if (y_end_scaled >= target.height) target.height else @intCast(y_end);
-    // const x_end_proper: usize = if (x_end_scaled >= target.width) target.width else @intCast(x_end);
-    // std.debug.print("from: {},{} to {},{}\n", .{ x_start, y_start, x_end, y_end });
-
-    for (@intFromFloat(y_start)..@intFromFloat(y_end)) |ty| {
+    for (@intFromFloat(@round(y_start))..@intFromFloat(@round(y_end))) |ty| {
         const tyf: f32 = @floatFromInt(ty);
 
-        for (@intFromFloat(x_start)..@intFromFloat(x_end)) |tx| {
+        for (@intFromFloat(@round(x_start))..@intFromFloat(@round(x_end))) |tx| {
             const txf: f32 = @floatFromInt(tx);
 
             const sxf = @floor((txf - x_start) / x_scale);

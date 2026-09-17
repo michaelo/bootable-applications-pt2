@@ -51,21 +51,17 @@ const SlideIntroData = struct {
 var slideIntroData = SlideIntroData{};
 pub fn slide(state: *main.State, td: f32) main.SlideResult {
     _ = td;
-    drawing.bitmapFill(state.backbuffer, drawing.Colors.black);
-    // state.console.write("backbuffer: {d},{d} (stride: {d})", .{ state.backbuffer.width, state.backbuffer.height, state.backbuffer.stride });
-    // if (state.firstFrame) {
-    // 90x20 pct
-    // title_bitmap = drawing.bitmapCreate(uefi.pool_allocator, state.unit * 90, state.unit * 20) catch unreachable;
-    // drawing.bitmapFill(title_bitmap, drawing.Colors.black);
+    drawing.bitmapFill(state.backbuffer, main.defaultStyle.bg_color);
+
     _ = drawing.drawStringOutlined(
         state.backbuffer,
         8 * state.unit,
         1 * state.unit,
         drawing.Colors.transparent,
-        drawing.Colors.black,
-        drawing.Colors.white,
+        main.defaultStyle.fg_color,
+        main.defaultStyle.outline_color,
         2,
-        @intFromFloat(6 * state.unit),
+        @intFromFloat(7 * state.unit),
         "Bootable",
     );
     // state.console.write("Bootable: {d},{d}. Width: {d}", .{ 5 * state.unit, 1 * state.unit, w1 });
@@ -73,12 +69,12 @@ pub fn slide(state: *main.State, td: f32) main.SlideResult {
     _ = drawing.drawStringOutlined(
         state.backbuffer,
         5 * state.unit,
-        6.5 * state.unit,
+        7 * state.unit,
         drawing.Colors.transparent,
-        drawing.Colors.black,
-        drawing.Colors.white,
+        main.defaultStyle.fg_color,
+        main.defaultStyle.outline_color,
         2,
-        @intFromFloat(4 * state.unit),
+        @intFromFloat(7 * state.unit),
         "Applications",
     );
     // state.console.write("Applications: {d},{d}. Width: {d}", .{ 1 * state.unit, 6.5 * state.unit, w2 });
@@ -86,28 +82,32 @@ pub fn slide(state: *main.State, td: f32) main.SlideResult {
     _ = drawing.drawStringOutlined(
         state.backbuffer,
         5 * state.unit,
-        13 * state.unit,
+        14.5 * state.unit,
         drawing.Colors.transparent,
-        drawing.Colors.black,
-        drawing.Colors.white,
+        main.defaultStyle.fg_color,
+        main.defaultStyle.outline_color,
         1,
         @intFromFloat(3 * state.unit),
         "- fully interactive programs",
     );
 
-    if (slideIntroData.qr_bitmap.width == 0) {
+    if (state.firstFrame) {
+        if (slideIntroData.qr_bitmap.width != 0) {
+            // TODO: wrap allocator in state - potentially as arena
+            slideIntroData.qr_bitmap.free(uefi.pool_allocator);
+        }
         slideIntroData.qr_bitmap = drawing.bitmapCreate(uefi.pool_allocator, 33, 33) catch unreachable;
-        drawing.drawPlotToBitmap(33, 33, 2, slideIntroData.qr_bitmap, qr_plot, [2]drawing.Pixel{ drawing.Colors.black, drawing.Colors.white });
+        drawing.drawPlotToBitmap(33, 33, 2, slideIntroData.qr_bitmap, qr_plot, [2]drawing.Pixel{ main.defaultStyle.bg_color, main.defaultStyle.fg_color });
         // TBD: Scale up bitmap so we only need to blt later?
     }
 
     drawing.bltBitmapScaled(
         state.backbuffer,
         slideIntroData.qr_bitmap,
-        30 * state.unit,
-        30 * state.unit,
         60 * state.unit,
-        60 * state.unit,
+        state.backbuffer.height - 40 * state.unit,
+        95 * state.unit,
+        state.backbuffer.height - 5 * state.unit,
     );
 
     // state.console.write("fully etc: {d},{d}. Width: {d}", .{ 1 * state.unit, 13 * state.unit, w3 });

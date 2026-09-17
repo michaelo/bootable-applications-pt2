@@ -33,8 +33,7 @@ fn do() !void {
         return error.cant_read_volume;
     };
 
-    // Read contents of some file. ATT! Requires file to be preexisting in mounted dir/image. Currently not
-    //
+    // Read contents of some file. ATT! Requires file to be preexisting in mounted dir/image
     {
         var file = volume.open(utils.W("readme.txt"), .read, .{}) catch {
             debug("Could not open file. Aborting", .{});
@@ -52,7 +51,7 @@ fn do() !void {
 
     // Create new file and write to it
     {
-        debug("Open file...", .{});
+        debug("Open file to write...", .{});
         var file = volume.open(utils.W("test.txt"), .read_write_create, .{}) catch {
             debug("Could not open file. Aborting", .{});
             return error.cant_open_file;

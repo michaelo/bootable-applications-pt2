@@ -197,6 +197,13 @@ li {
 }
 
 .bg-image h1 {
-    background: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.9);
     padding: .5em 0;
+}
+
+.quote {
+    font-size: 1.5em;
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+    margin: 1em;
 }

@@ -55,7 +55,7 @@ Thanks / credits
 
 TODO
 ---
-* Simply integer type handling - currently lots of brute force casting in the utility functions
+* Simplify integer type handling - currently lots of brute force casting in the utility functions
 * Simplify builds for ARM / alternative architectures
 * Investigate possibilities for embedding GPU-drivers
 * Create demo which showcases the proper OS handover from UEFI?
