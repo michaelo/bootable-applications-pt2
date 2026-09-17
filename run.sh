@@ -4,15 +4,24 @@ set -u
 
 ENTRY_FILE=$1
 
-# Create fresh NVRAM to avoid PlatformConfig override from OVMFx64.fd built-in NVRAM
 rm -f "demos/out/${ENTRY_FILE}/Vars.fd" 2>/dev/null || true
 mkdir -p "demos/out/${ENTRY_FILE}"
 truncate -s 65536 "demos/out/${ENTRY_FILE}/Vars.fd"
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    platform_args="-accel hvf -cpu host"
+else
+    # TODO: add acceleration-options for other OSes/targets as well
+    platform_args=""
+fi
+
 qemu-system-x86_64 \
+    -m 4G \
+    $platform_args \
+    -smp 1 \
     -machine q35 \
     -display cocoa \
-    -device VGA,edid=on,xres=1400,yres=1050 \
+    -device VGA,edid=on,xres=640,yres=480 \
     -serial stdio \
     -drive if=pflash,format=raw,readonly=on,file=resources/bios/OVMFx64.fd \
     -drive if=pflash,format=raw,file=demos/out/${ENTRY_FILE}/Vars.fd \
