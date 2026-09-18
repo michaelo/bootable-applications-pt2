@@ -58,7 +58,8 @@
                         <li>Briefly: Getting started with UEFI</li>
                         <li>More so: Getting to know the project repository</li>
                         <li>Mostly so: See some demos and code</li>
-                        <li>Sorry, nothing to bring home to your boss</li>
+                        <li>Sorry, nothing to bring home to your bosses</li>
+                        <li style="margin-top: 1em;">Plenty of time - if everything goes well</li>
                     </ul>
                 </div>
             </div>
@@ -72,7 +73,7 @@
                     </li>
                     <li>New this round:
                         <ul>
-                            <li>Deeper look on protocols</li>
+                            <li>More protocols</li>
                             <li>Greater compositions</li>
                             <li>Zig - not critical to follow along</li>
                             <li>Blurring the edges between UEFI and playing around</li>
@@ -100,7 +101,7 @@
                     <!-- <h2>Usability</h2> -->
                 </div>
                 <div class="stack-slide bg-grass">
-                    <h1>But also...</h1>
+                    <!-- <h1>But also...</h1> -->
                     <h2>When everybody <span title="Pun not originally intended">zigs</span> - ain't it nice to – every once in a while – zag?</h2>
                 </div>
             </div>
@@ -113,12 +114,13 @@
                     AMD, Apple, ARM, NVIDIA, Cisco, Qualcomm, ++++</li>
                     <li>Well specified, quite well supported</li>
                     <!-- <li>Consists of a basic entrypoint allowing probing system capabilities through structs and function pointers</li> -->
-                    <li>"Protocols"
+                    <li>Core services + Protocols
                         <ul>
+                            <li>Boot service -> probe for protocol</li>
                             <li>Simple Text Input AKA keyboard in</li>
                             <li>Simple Text Output AKA text out - sometimes</li>
                             <li>Graphics Out - oh yeah!</li>
-                            <li>USB, Networking, ...</li>
+                            <li>USB, Networking, PCI-bus ...</li>
                         </ul>
                     </li>
                     <li>No guarantees as to performance</li>
@@ -167,8 +169,12 @@
                 </div>
                 <div class="stack-slide">
                     <h2>Basic example: text out</h2>
-                    <img src="resources/uefi/EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL example.png">
-                    <img src="resources/gfxout-qemu.png" style="height: 8em;">
+                    <img src="resources/uefi/EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL example.png" style="height: 40vh">
+                    <img src="resources/gfxout-qemu.png" style="height: 30vh;">
+                </div>
+                <div class="stack-slide">
+                    <h2>Event handling</h2>
+                    <img src="resources/example-events.png">
                 </div>
                 <div class="stack-slide cols-2">
                     <div>
@@ -187,13 +193,11 @@
                     </div>
                     <div>
                         <h2>Spec - exerpt</h2>
-                        <img src="resources/uefi/EFI_SIMPLE_FILE_SYSTEM_PROTOCOL.png">
+                        <img src="resources/uefi/EFI_SIMPLE_FILE_SYSTEM_PROTOCOL.png" style="height: 40vh">
+                        <img src="resources/uefi/EFI_FILE_PROTOCOL.png"  style="height: 40vh">
                     </div>
                 </div>
-                <div class="stack-slide">
-                    <h2>Event handling</h2>
-                    <img src="resources/example-events.png">
-                </div>
+
                 <div class="stack-slide">
                     <h2>Timer handling</h2>
                     <img src="resources/example-timer.png">
