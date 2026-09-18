@@ -107,17 +107,44 @@ pub fn drawBoxFilled(target: Bitmap, x: f32, y: f32, width: f32, height: f32, bg
         @memset(target.buffer[y_idx * target_stride + x_idx .. y_idx * target_stride + x_end_idx], bg_color.argb);
     }
 
-    // top edge
-    drawLineWidth(target, left, top + half_inty, right, top + half_inty, border_color, stroke_width);
+    // TODO: Not accurately positioned
+    if (stroke_width > 0) {
+        // top edge
+        drawLineWidth(target, left, top + half_inty, right, top + half_inty, border_color, stroke_width);
 
-    // bottom edge
-    drawLineWidth(target, left, bottom - half_inty, right, bottom - half_inty, border_color, stroke_width);
+        // bottom edge
+        drawLineWidth(target, left, bottom - half_inty, right, bottom - half_inty, border_color, stroke_width);
 
-    // left edge
-    drawLineWidth(target, left + half_inty, top, left + half_inty, bottom, border_color, stroke_width);
+        // left edge
+        drawLineWidth(target, left + half_inty, top, left + half_inty, bottom, border_color, stroke_width);
 
-    // right edge
-    drawLineWidth(target, right - half_inty, top, right - half_inty, bottom, border_color, stroke_width);
+        // right edge
+        drawLineWidth(target, right - half_inty, top, right - half_inty, bottom, border_color, stroke_width);
+    }
+}
+
+// TODO: Unverified
+pub fn drawBoxFilledXor(target: Bitmap, x: f32, y: f32, width: f32, height: f32, bg_color: Pixel) void {
+    // const half_inty = @round(stroke_width / 2);
+    // const left = x;
+    // const top = y;
+    // const right = x + width - 1;
+    // const bottom = y + height - 1;
+
+    const x_end_idx: usize = @intFromFloat(x + width);
+    var y_idx: usize = @intFromFloat(y);
+    const y_end_idx: usize = @intFromFloat(y + height);
+    const target_stride: usize = @intFromFloat(target.stride);
+    var target_buffer: [*]Pixel = @ptrCast(@alignCast(target.buffer));
+
+    // TBD: use gfxout blt?
+    while (y_idx < y_end_idx) : (y_idx += 1) {
+        var x_idx: usize = @intFromFloat(x);
+        while (x_idx < x_end_idx) : (x_idx += 1) {
+            target_buffer[y_idx * target_stride + x_idx].int ^= bg_color.int;
+        }
+        // @memset(target.buffer[y_idx * target_stride + x_idx .. y_idx * target_stride + x_end_idx], bg_color.argb);
+    }
 }
 
 /// Draws a circle using Jesko's method
@@ -234,7 +261,6 @@ pub fn bltBitmapScaled(target: Bitmap, source: Bitmap, x_start: f32, y_start: f3
     const y_scale: f32 = (y_end - y_start) / source.height;
 
     // TODO: cap the part that will be outside of viewport?
-
     for (@intFromFloat(@round(y_start))..@intFromFloat(@round(y_end))) |ty| {
         const tyf: f32 = @floatFromInt(ty);
 
@@ -246,9 +272,33 @@ pub fn bltBitmapScaled(target: Bitmap, source: Bitmap, x_start: f32, y_start: f3
 
             const sidx: usize = @intFromFloat(@round(syf * source.stride) + sxf);
             const tidx: usize = @intFromFloat(@round(tyf * target.stride) + txf);
-            // std.debug.print("({}, {})({}) -> ({}, {})({})\n", .{ sxf, syf, sidx, tx, ty, tidx });
 
             target.buffer[tidx] = source.buffer[sidx];
+        }
+    }
+}
+
+/// bltBitmapScaled, but respects "transparent"
+pub fn bltBitmapScaledEx(target: Bitmap, source: Bitmap, x_start: f32, y_start: f32, x_end: f32, y_end: f32) void {
+    const x_scale: f32 = (x_end - x_start) / source.width;
+    const y_scale: f32 = (y_end - y_start) / source.height;
+
+    // TODO: cap the part that will be outside of viewport?
+    for (@intFromFloat(@round(y_start))..@intFromFloat(@round(y_end))) |ty| {
+        const tyf: f32 = @floatFromInt(ty);
+
+        for (@intFromFloat(@round(x_start))..@intFromFloat(@round(x_end))) |tx| {
+            const txf: f32 = @floatFromInt(tx);
+
+            const sxf = @floor((txf - x_start) / x_scale);
+            const syf = @floor((tyf - y_start) / y_scale);
+
+            const sidx: usize = @intFromFloat(@round(syf * source.stride) + sxf);
+            const tidx: usize = @intFromFloat(@round(tyf * target.stride) + txf);
+
+            if (source.buffer[sidx].reserved > 0) {
+                target.buffer[tidx] = source.buffer[sidx];
+            }
         }
     }
 }
@@ -329,10 +379,15 @@ pub const Colors = struct {
     pub const transparent = Pixel{ .int = 0x00000000 };
     pub const black = Pixel{ .int = 0xff000000 };
     pub const white = Pixel{ .int = 0xffffffff };
+    pub const gray_light = Pixel{ .int = 0xffdddddd };
+    pub const gray_dark = Pixel{ .int = 0xff999999 };
 
     pub const red = Pixel{ .int = 0xffff0000 };
+    pub const red_dark = Pixel{ .int = 0xff990000 };
     pub const green = Pixel{ .int = 0xff00ff00 };
+    pub const green_dark = Pixel{ .int = 0xff009900 };
     pub const blue = Pixel{ .int = 0xff0000ff };
+    pub const blue_dark = Pixel{ .int = 0xff000099 };
 };
 
 /// Base convenience type encapsulating a pixel buffer. Core primitive for all drawing/rendering functions.
@@ -513,4 +568,41 @@ pub fn drawStringOutlined(bitmap: Bitmap, dx: f32, dy: f32, bg: Pixel, fg: Pixel
     _ = drawString(bitmap, dx + outline_size, dy + outline_size, Colors.transparent, outline_color, size, text);
 
     return drawString(bitmap, dx, dy, bg, fg, size, text);
+}
+
+// New and improved drawString - to substitute all the others
+pub const Vector2 = struct {
+    x: f32,
+    y: f32,
+};
+
+pub const Box = struct {
+    pos: Vector2,
+    size: Vector2,
+};
+
+pub const TextParams = struct {
+    outline: bool = false,
+    outline_color: Pixel = Colors.black,
+    outline_width: f32 = 0,
+    bg: Pixel = Colors.white,
+    fg: Pixel = Colors.black,
+    text_size: f32 = 8,
+    line_height_fraction: f32 = 1,
+};
+
+pub fn drawStringEx(bitmap: Bitmap, pos: Vector2, params: TextParams, text: []const u8) f32 {
+    const text_size: u16 = @intFromFloat(params.text_size);
+    const line_height = params.text_size * params.line_height_fraction;
+    var line_it = std.mem.splitAny(u8, text, "\n");
+    var line_idx: usize = 0;
+    while (line_it.next()) |line| {
+        const y = @round(pos.y + @as(f32, @floatFromInt(line_idx)) * line_height);
+        for (line, 0..) |c, cidx| {
+            const x = @round(pos.x + params.text_size * @as(f32, @floatFromInt(cidx)));
+            drawChar(bitmap, x, y, params.bg, params.fg, text_size, c);
+        }
+        line_idx += 1;
+    }
+    return @as(f32, @floatFromInt(text.len)) * params.text_size;
 }

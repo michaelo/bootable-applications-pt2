@@ -16,8 +16,15 @@ pub fn main() uefi.Status {
     drawing.bitmapFill(backbuffer, bg);
 
     const fps = 240;
-    const loopEvent = boot_services.createEvent(.{ .timer = true }, .{ .function = null }) catch unreachable;
-    boot_services.setTimer(loopEvent, .periodic, 10000000 / fps) catch unreachable;
+    const loopEvent = boot_services.createEvent(
+        .{ .timer = true },
+        .{ .function = null },
+    ) catch unreachable;
+    boot_services.setTimer(
+        loopEvent,
+        .periodic,
+        10000000 / fps,
+    ) catch unreachable;
 
     const Circle = struct {
         x: f32 = 0,

@@ -23,6 +23,6 @@ pub fn slide(state: *main.State, td: f32) main.SlideResult {
     // _ = drawing.drawStringOutlined(state.backbuffer, 100, 100, drawing.Colors.transparent, drawing.Colors.black, drawing.Colors.red, 2, size, "Slide 1");
 
     // drawing.bltBitmapScaled(state.backbuffer, qr_bitmap, 300, 10, 300 + 200, 10 + 200);
-    drawing.bltBitmapScaled(state.backbuffer, bmp_bitmap, 20 * state.unit, 0, state.backbuffer.width - 20 * state.unit, state.backbuffer.height);
+    drawing.bltBitmapScaled(state.backbuffer, bmp_bitmap, 25 * state.unit, 0, state.backbuffer.width - 25 * state.unit, state.backbuffer.height);
     return if (state.frameT > 10) .finished else .running;
 }

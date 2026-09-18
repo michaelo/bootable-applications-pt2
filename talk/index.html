@@ -18,6 +18,10 @@
             max-height: 12%;
             margin-bottom: .5em;
         }
+
+        .bg-grass {
+            border-bottom: 3em solid #00ff00;
+        }
      </style>
 </head>
 
@@ -42,8 +46,21 @@
 
 
             </div>
-            <div class="slide layout-title centered">
+            <div class="slide stack">
+                <div class="stack-slide layout-title centered">
                 <h1>What to expect<br />(when you're …)</h1>
+                </div>
+                <div class="stack-slide">
+                    <!-- <h2>… expecting to find out what we'll cover today</h2> -->
+                    <h2>What we'll do today</h2>
+                    <ul>
+                        <li>Slow down</li>
+                        <li>Briefly: Getting started with UEFI</li>
+                        <li>More so: Getting to know the project repository</li>
+                        <li>Mostly so: See some demos and code</li>
+                        <li>Sorry, nothing to bring home to your boss</li>
+                    </ul>
+                </div>
             </div>
             <div class="slide cols-2-weighted">
                 <div>
@@ -57,7 +74,7 @@
                         <ul>
                             <li>Deeper look on protocols</li>
                             <li>Greater compositions</li>
-                            <li>Zig - but not important</li>
+                            <li>Zig - not critical to follow along</li>
                             <li>Blurring the edges between UEFI and playing around</li>
                             <li>Less time spent on tooling</li>
                         </ul>
@@ -76,30 +93,35 @@
                     <h1>Why...</h1>
                 </div>
                 <div class="stack-slide">
-                    <h1>Fun</h1>
+                    <h1>(Still) fun</h1>
                 </div>
                 <div class="stack-slide">
                     <h1>But also...</h1>
                     <!-- <h2>Usability</h2> -->
                 </div>
+                <div class="stack-slide bg-grass">
+                    <h1>But also...</h1>
+                    <h2>When everybody <span title="Pun not originally intended">zigs</span> - ain't it nice to – every once in a while – zag?</h2>
+                </div>
             </div>
             <div class="slide">
-                <h2>A brief summary of UEFI</h2>
+                <h2>A _brief_ summary of UEFI</h2>
                 <ul>
                     <li><ins>U</ins>nified <ins>E</ins>xtensible <ins>F</ins>irmware <ins>I</ins>nterface</li>
                     <li>Late '90s: "EFI" by Intel – BIOS for multiple CPU-architectures</li>
                     <li>2005->: "UEFI" - many contributers and adopters since:<br />
                     AMD, Apple, ARM, NVIDIA, Cisco, Qualcomm, ++++</li>
                     <li>Well specified, quite well supported</li>
-                    <li>Consists of a basic entrypoint allowing probing system capabilities through structs and function pointers</li>
+                    <!-- <li>Consists of a basic entrypoint allowing probing system capabilities through structs and function pointers</li> -->
                     <li>"Protocols"
                         <ul>
-                            <li>Simple Text Input</li>
-                            <li>Simple Text Output</li>
-                            <li>Graphics Out</li>
-                            <li>...</li>
+                            <li>Simple Text Input AKA keyboard in</li>
+                            <li>Simple Text Output AKA text out - sometimes</li>
+                            <li>Graphics Out - oh yeah!</li>
+                            <li>USB, Networking, ...</li>
                         </ul>
                     </li>
+                    <li>No guarantees as to performance</li>
                 </ul>
             </div>
             <div class="slide stack">
@@ -122,31 +144,70 @@
                     </ul>
                     <p class="quote bottom">"He's a developer, he is fallible"</p>
                 </div>
+                <div class="stack-slide layout-title centered">
+                    <h2>Let's take a peek!</h2>
+                </div>
             </div>
             <div class="slide stack">
                 
                 <div class="stack-slide layout-title centered bg-image" bg="resources/profit.jpg">
                     <h1>Anathomy of a UEFI application</h1>
                 </div>
-                <div class="stack-slide">
-                    <h2>Architecture</h2>
+                <div class="stack-slide cols-2-weighted">
+                    <div>
+                        <h2>The specification</h2>
+                        <ul>
+                            <li><a href="https://uefi.org/">uefi.org</a>/specs/UEFI/2.11/</li>
+                            <!-- <li>Don't worry too muc about the code - it may get slightly dirty</li> -->
+                        </ul>
+                    </div>
+                    <div>
+                        <img src="resources/uefi-menu-overview.png">
+                    </div>
                 </div>
                 <div class="stack-slide">
-                    <h2>Basic example</h2>
+                    <h2>Basic example: text out</h2>
                     <img src="resources/uefi/EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL example.png">
+                    <img src="resources/gfxout-qemu.png" style="height: 8em;">
+                </div>
+                <div class="stack-slide cols-2">
+                    <div>
+                        <h2>Example: pointer</h2>
+                        <img src="resources/uefi/EFI_SIMPLE_POINTER_PROTOCOL example.png">
+                    </div>
+                    <div>
+                        <h2>Spec - exerpt</h2>
+                        <img src="resources/uefi/EFI_SIMPLE_POINTER_PROTOCOL doc.png">
+                    </div>
+                </div>
+                <div class="stack-slide cols-2">
+                    <div>
+                        <h2>Example: files</h2>
+                        <img src="resources/uefi/EFI_SIMPLE_FILE_SYSTEM_PROTOCOL example.png">
+                    </div>
+                    <div>
+                        <h2>Spec - exerpt</h2>
+                        <img src="resources/uefi/EFI_SIMPLE_FILE_SYSTEM_PROTOCOL.png">
+                    </div>
                 </div>
                 <div class="stack-slide">
-                    <h2>Access/probe something useful</h2>
+                    <h2>Event handling</h2>
+                    <img src="resources/example-events.png">
                 </div>
                 <div class="stack-slide">
-                    <h2>Do things!</h2>
+                    <h2>Timer handling</h2>
+                    <img src="resources/example-timer.png">
+                    <img src="resources/example-timer-loop.png">
+                </div>
+                <div class="stack-slide layout-title centered">
+                    <h2>And we're all set up to do things!</h2>
                 </div>
             </div>
             <div class="slide stack">
                 <div class="stack-slide layout-title centered">
                     <h1>From code to execution</h1>
                 </div>
-                <div class="stack-slide cols-2-weighted">
+                <!-- <div class="stack-slide cols-2-weighted">
                     <div>
                     <h2>Tools...</h2>
                     <ul>
@@ -163,16 +224,27 @@
                         <img src="resources/logos/logo-llvm.png">
                         <img src="resources/logos/logo-gnu.svg">
                     </div>
-                </div>
+                </div> -->
                 <div class="stack-slide">
                     <img src="resources/process.webp" alt="Flowchart depicting the sequence from code, via zig/llvm as compiler to an executable that can either be passed on to QEMU or flashed to USB for direct bootability" >
+                </div>
+                <div class="stack-slide">
+                    <h2>Boot sequence</h2>
+                    <img src="resources/uefi-spec-bootingseq.png">
+                    <ul>
+                        <li>note: Disable watchdog</li>
+                    </ul>
                 </div>
             </div>
             <div class="slide layout-title centered">
                 <h1>Let's throw away some code!</h1>
                 <h2>Demo-time</h2>
+                <img src="resources/notallowed.png" title="Logos of Windows, Linux, Chrome, Firefox, OpenAI, Docker all x'ed out">
             </div>
-            <div class="slide stack">
+            <div class="slide layout-title centered">
+                <p>This slide intentionally left "blank"</p>
+            </div>
+            <!-- <div class="slide stack">
                 <div class="stack-slide">
                     Demo step 1
                 </div>
@@ -182,7 +254,7 @@
                 <div class="stack-slide">
                     Demo step 3
                 </div>
-            </div>
+            </div> -->
             <div class="slide">
                 <h2>Where to next?</h2>
                 <ul>

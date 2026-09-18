@@ -13,10 +13,16 @@ pub fn formatToU16(buf8: []u8, buf16: []u16, comptime format: []const u8, vars: 
 
 pub fn hangForKey(keycode: u16) void {
     const boot_services = uefi.system_table.boot_services.?;
-    while (true) {
-        _ = boot_services.waitForEvent(@as([]const uefi.Event, @ptrCast(&uefi.system_table.con_in.?.wait_for_key))) catch continue;
-        const key = uefi.system_table.con_in.?.readKeyStroke() catch continue;
-        if (key.unicode_char == keycode) break;
+    // Do we have console input?
+    if (uefi.system_table.con_in) |con_in| {
+        // A list of events to check for - only key for now
+        const events: [1]uefi.Event = [_]uefi.Event{con_in.wait_for_key};
+        while (true) {
+            // If checking several events: the return value must be inspected
+            _ = boot_services.waitForEvent(&events) catch continue;
+            const key = con_in.readKeyStroke() catch continue;
+            if (key.unicode_char == keycode) break;
+        }
     }
 }
 
