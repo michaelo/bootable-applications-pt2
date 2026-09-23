@@ -20,8 +20,8 @@ pub fn shaderSineWaveStripes(x: f32, y: f32, t: f32) drawing.Pixel {
 }
 
 pub fn shaderCheckerboard(x: f32, y: f32, t: f32) drawing.Pixel {
-    const TILE_SIZE = 64.0;
-    const CHECKER_FREQ = 0.05;
+    const TILE_SIZE = 128.0;
+    const CHECKER_FREQ = 0.025;
 
     const cx: u32 = @intFromFloat(x / TILE_SIZE);
     const cy: u32 = @intFromFloat(y / TILE_SIZE);

@@ -242,7 +242,7 @@ pub fn bitmapFill(bitmap: Bitmap, color: Pixel) void {
 
 pub fn bltToScreen(gfx_out: *uefi.protocol.GraphicsOutput, bitmap: Bitmap, x: i32, y: i32) void {
     gfx_out.blt(
-        bitmap.buffer,
+        @as(?[*]BltPixel, @ptrCast(bitmap.buffer)),
         uefi.protocol.GraphicsOutput.BltOperation.blt_buffer_to_video,
         0,
         0,
@@ -255,7 +255,8 @@ pub fn bltToScreen(gfx_out: *uefi.protocol.GraphicsOutput, bitmap: Bitmap, x: i3
 }
 
 /// Copies source bitmpat to target - filling/stretching to the area (x_start,y_start) -> (x_end, y_end)
-/// Limitation: assumes full area fits within the dimensions of target
+/// Limitation: assumes full area fits in the dimensions of target
+/// TODO: Make version that scales to nearest full multiple
 pub fn bltBitmapScaled(target: Bitmap, source: Bitmap, x_start: f32, y_start: f32, x_end: f32, y_end: f32) void {
     const x_scale: f32 = (x_end - x_start) / source.width;
     const y_scale: f32 = (y_end - y_start) / source.height;
@@ -535,7 +536,13 @@ test "drawChar size=16" {
 }
 
 pub fn textWidth(text: []const u8, size: u16) f32 {
-    return @as(f32, @floatFromInt(text.len)) * size;
+    // Find longest line
+    var line_it = std.mem.splitAny(u8, text, "\n");
+    var longest: usize = 0;
+    while (line_it.next()) |line| {
+        if (line.len > longest) longest = line.len;
+    }
+    return @as(f32, @floatFromInt(longest)) * size;
 }
 
 /// Renders a sequence of fixed-width characters
@@ -592,14 +599,18 @@ pub const TextParams = struct {
 };
 
 pub fn drawStringEx(bitmap: Bitmap, pos: Vector2, params: TextParams, text: []const u8) f32 {
+    const normalized_pos: Vector2 = .{
+        .x = if (pos.x >= 0) pos.x else bitmap.width - 1 + pos.x,
+        .y = if (pos.y >= 0) pos.y else bitmap.height - 1 + pos.y,
+    };
     const text_size: u16 = @intFromFloat(params.text_size);
     const line_height = params.text_size * params.line_height_fraction;
     var line_it = std.mem.splitAny(u8, text, "\n");
     var line_idx: usize = 0;
     while (line_it.next()) |line| {
-        const y = @round(pos.y + @as(f32, @floatFromInt(line_idx)) * line_height);
+        const y = @round(normalized_pos.y + @as(f32, @floatFromInt(line_idx)) * line_height);
         for (line, 0..) |c, cidx| {
-            const x = @round(pos.x + params.text_size * @as(f32, @floatFromInt(cidx)));
+            const x = @round(normalized_pos.x + params.text_size * @as(f32, @floatFromInt(cidx)));
             drawChar(bitmap, x, y, params.bg, params.fg, text_size, c);
         }
         line_idx += 1;

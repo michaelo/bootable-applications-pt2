@@ -10,6 +10,7 @@ const utils = @import("lib/utils.zig");
 const drawing = @import("lib/drawing.zig");
 const DebugConsole = @import("talk-slides/debug-console.zig").DebugConsole;
 const Shaders = @import("lib/shaders.zig");
+const slideGenericImage = @import("talk-slides/slideGenericImage.zig").createSlide;
 
 const Pixel = drawing.Pixel;
 const Colors = drawing.Colors;
@@ -18,6 +19,9 @@ const Colors = drawing.Colors;
 const slides = [_]*const fn (*State, f32) SlideResult{
     slidePrompt("We are live!", 0.1),
     slideSelectRes,
+    // slideTitleAndText("Code example", @embedFile("./gfx.zig"), .{
+    //     .text_scale = 1,
+    // }),
     slideTitleAndText("Controls",
         \\ * enter - next
         \\ * b - back
@@ -26,14 +30,105 @@ const slides = [_]*const fn (*State, f32) SlideResult{
         \\ c - toggle debug console
         \\ t - toggle theme
         \\ q - quit
-    ),
+    , .{}),
     @import("talk-slides/slideIntro.zig").slide,
-    @import("talk-slides/slideImage.zig").slide,
+    slidePrompt("What to expect!", 0.1),
+    slideTitleAndText("Agenda",
+        \\ * Slow down
+        \\ * Intro to UEFI
+        \\ * The project repository
+        \\ * Demos and code
+        \\ * Not so much to bring home
+        \\      (sorry, not sorry)
+    , .{}),
+    slideTitleAndText("About",
+        \\ * Michael Odden - independent
+        \\      developer
+        \\ * Previous talk:
+        \\    https://youtu.be/uW98YqvLeKo
+        \\ * New this round:
+        \\  * More protocols
+        \\  * Compositions
+        \\  * C -> Zig (not critical)
+        \\  * Demos > tooling
+    , .{}),
+    slideTitleAndText("Brief summary",
+        \\ * Unified Extensible Firmware
+        \\      Interface
+        \\ * Intel ~ '98
+        \\ * BIOS / BSP
+        \\ * 2005 -> many contributors
+        \\  AMD, Apple, Arm, Nvidia, Cisco,
+        \\  Qualcomm, +++
+        \\ * Well specified, well supported
+        \\ * https://uefi.org/ - free
+        \\ * Services + Protocols
+        \\ * No guarantees as to availability,
+        \\   performance etc
+    , .{}),
+    slidePrompt("Why", 0),
+    slideTitleAndText("Why",
+        \\ * (Still) fun
+        \\ * Trends
+        \\ * Let's zag!
+    , .{}),
+    slidePrompt("Food for thought...\n         --->", 0),
+    slideGenericImage("gfx-windows-minimal-example.bmp"),
+    slideGenericImage("gfx-uefi-minimal.bmp"),
+    slidePrompt("The repository", 0),
+    slideGenericImage("repo-overview.bmp"),
+    slideTitleAndText("Design goals",
+        \\ * Playground to learn UEFI dev
+        \\ * Collection of
+        \\   * specific experiments
+        \\   * complex apps
+        \\   * higher lever libraries
+        \\ * Want contributions!
+        \\
+        \\
+        \\     "He's a developer
+        \\         - he is fallible"
+    , .{}),
+    slidePrompt("Let's throw away\n  some code!", 0),
+    slideGenericImage("notallowed.bmp"),
+    // img: OS crossout
+    slidePrompt("Simple text output", 0),
+    // slideGenericImage("EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL doc.bmp"),
+    slideGenericImage("EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL example.bmp"),
+    // TODO: add slide with image of spec + code
+    // slidePrompt("Simple text input", 0),
+    // slideGenericImage("EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL example.bmp"),
+    // TODO: add slide with image of spec + code
+    slidePrompt("Simple gfx output", 0),
+    slideGenericImage("EFI_GRAPHICS_OUTPUT_PROTOCOL doc.bmp"),
+    // slideGenericImage("EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL example.bmp"),
+    // TODO: add slide with image of spec + code
+    slidePrompt("Event handling", 0),
+    slideGenericImage("EFI_GRAPHICS_OUTPUT_PROTOCOL doc.bmp"),
+    slidePrompt("Simple pointer input", 0),
+    slideGenericImage("EFI_SIMPLE_POINTER_PROTOCOL doc.bmp"),
+    slideGenericImage("EFI_SIMPLE_POINTER_PROTOCOL example.bmp"),
+    slideBasicPointer,
+    slidePrompt("Protocols\nprotocols\nprotocols\n...", 0),
+    slideGenericImage("EFI_FILE_PROTOCOL.bmp"),
+    slideGenericImage("EFI_WIRELESS_MAC_CONNECTION_PROTOCOL.bmp"),
+    slideGenericImage("tape.bmp"),
+    slidePrompt("Compositions!", 0),
+    slideTitleAndText("Custom libs in repo",
+        \\ * Text rendering (8x8)
+        \\ * Bitmap handling
+        \\ * Bitmap scaling
+        \\ * Convenience functions
+        \\ * Debug console
+    , .{}),
+    slidePrompt("Read and parse file", 0),
+    slideGenericImage("companion-knight-600x800.bmp"),
     slideAnimationRaw,
     slideAnimationBackbuffer,
-    slideBasicPointer,
-    slidePrompt("Hold on... (q?)", 1),
+    // slidePrompt("Hold on... (q?)", 1),
+    slidePrompt("Let's put it\ntogether", 0),
     slideGuiExample,
+    slidePrompt("With great power...", 0),
     slideGame,
     slidePrompt("Performance warning", 0),
     slideShaderCheckerboard,
@@ -48,7 +143,12 @@ const slides = [_]*const fn (*State, f32) SlideResult{
         \\ * Manual memory management
         \\ * Disable watchdog for long-
         \\      running apps
-    ),
+        \\  boot_services
+        \\      .setWatchdogTimer(0, 0, null);
+    , .{}),
+    slidePrompt("Let's run it\nourselves (boot!)", 0),
+    // Boot back into OS and showcase how to use the repository
+    // Then run the app in emulation and get to the end
     slideTitleAndText("Immediate plans",
         \\ * More fonts!
         \\ * Standardize lib
@@ -58,25 +158,27 @@ const slides = [_]*const fn (*State, f32) SlideResult{
         \\ * Networking
         \\ * Live debugging (lldb)
         \\ * Hot reloading?
-    ),
-    slideTitleAndText("Where to go?",
-        \\ * Any input to where to go?
-        \\   * Expand on protocols?
-        \\      Bluetooth, networking, ...
-        \\   * Extend on handover to
-        \\      "proper" OS
-        \\   * Pivot: Explore bootability
-        \\          on other devices? 
-        \\      Mobile, Apple Silicon, etc
-        \\   * ... ?
-        \\ 
-        \\ -- Let me know! --
-    ),
-    // slideTitleAndText("What have we learned?",
-    //     \\ * How to build UEFI applications
-    //     \\ *
+    , .{}),
+    // slideTitleAndText("Where to go?",
+    //     \\ * Any input to where to go?
+    //     \\   * Expand on protocols?
+    //     \\      Bluetooth, networking, ...
+    //     \\   * Extend on handover to
+    //     \\      "proper" OS
+    //     \\   * Pivot: Explore bootability
+    //     \\          on other devices?
+    //     \\      Mobile, Apple Silicon, etc
+    //     \\   * ... ?
     //     \\
-    // ),
+    //     \\ -- Let me know! --
+    // , .{}),
+    slideTitleAndText("Lessons learned",
+        \\ * What UEFI is
+        \\ * Basic understanding of the spec
+        \\ * How to build UEFI applications
+        \\ * Emulation
+        \\ * Running on hardware
+    , .{}),
     slidePrompt("Questions?", 1),
     slideFinal,
 };
@@ -185,7 +287,7 @@ fn createPointerBitmap(alloc: std.mem.Allocator) !drawing.Bitmap {
 
 var pointerBitmap: drawing.Bitmap = .empty;
 
-fn roundToNearest(v: f32, mod: i32) f32 {
+pub fn roundToNearest(v: f32, mod: i32) f32 {
     const v_int: i32 = @intFromFloat(@round(v));
     const rem = @rem(v_int, mod);
     return @floatFromInt(v_int - rem);
@@ -465,7 +567,7 @@ fn slideGame(state: *State, td: f32) SlideResult {
         player_v = 20 * state.unit;
     }
     drawing.bitmapFill(state.backbuffer, defaultStyle.bg_color);
-    _ = drawing.drawString(state.backbuffer, state.unit, state.unit, Colors.transparent, defaultStyle.fg_color, @intFromFloat(2 * state.unit), "With great power...");
+    // _ = drawing.drawString(state.backbuffer, state.unit, state.unit, Colors.transparent, defaultStyle.fg_color, @intFromFloat(2 * state.unit), "With great power...");
     if (state.event) |e| {
         if (e == .key_down) {
             if (e.key_down.down) {
@@ -616,7 +718,7 @@ fn slideGuiExample(state: *State, td: f32) SlideResult {
     return .running;
 }
 
-fn slideTitleAndText(title: []const u8, text: []const u8) *const fn (*State, f32) SlideResult {
+fn slideTitleAndText(title: []const u8, text: []const u8, params: struct { title_scale: f32 = 5, text_scale: f32 = 3 }) *const fn (*State, f32) SlideResult {
     return struct {
         fn slide(state: *State, td: f32) SlideResult {
             _ = td;
@@ -631,7 +733,7 @@ fn slideTitleAndText(title: []const u8, text: []const u8) *const fn (*State, f32
                 defaultStyle.fg_color,
                 defaultStyle.outline_color,
                 0.2 * state.unit,
-                @intFromFloat(5 * state.unit),
+                @intFromFloat(roundToNearest(params.title_scale * state.unit, 8)),
                 title,
             );
 
@@ -644,7 +746,7 @@ fn slideTitleAndText(title: []const u8, text: []const u8) *const fn (*State, f32
                 .{
                     .bg = drawing.Colors.transparent,
                     .fg = defaultStyle.fg_color,
-                    .text_size = 3 * state.unit,
+                    .text_size = roundToNearest(params.text_scale * state.unit, 8),
                     .line_height_fraction = 1.5,
                 },
                 text,
@@ -821,7 +923,7 @@ fn checkEvents(state: *State, events: []const uefi.Event, instances: *const Prot
                     else => {},
                 }
 
-                state.console.write("e: {d} {}", .{ key.input.scan_code, key.input.scan_code == 1 });
+                // state.console.write("e: {d} {}", .{ key.input.scan_code, key.input.scan_code == 1 });
 
                 return .{ .key_down = .{
                     .keyCode = key.input.unicode_char,
@@ -890,7 +992,7 @@ fn slideSelectRes(state: *State, td: f32) SlideResult {
     const gfx_out_handlers: []uefi.Handle = @ptrCast(boot_services.locateHandleBuffer(.{ .by_protocol = &uefi.protocol.GraphicsOutput.guid }) catch null orelse unreachable);
 
     var scratch8: [128]u8 = undefined;
-    var mode_idx: u32 = 0;
+    var mode_idx: u32 = 7; // 1024x768 on ovmf/qmeu
     var device_idx: usize = 0;
     var screen = drawing.Bitmap.empty;
 

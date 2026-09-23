@@ -56,7 +56,7 @@ pub fn slide(state: *main.State, td: f32) main.SlideResult {
     _ = drawing.drawStringOutlined(
         state.backbuffer,
         8 * state.unit,
-        1 * state.unit,
+        2 * state.unit,
         drawing.Colors.transparent,
         main.defaultStyle.fg_color,
         main.defaultStyle.outline_color,
@@ -69,7 +69,7 @@ pub fn slide(state: *main.State, td: f32) main.SlideResult {
     _ = drawing.drawStringOutlined(
         state.backbuffer,
         5 * state.unit,
-        7 * state.unit,
+        8 * state.unit,
         drawing.Colors.transparent,
         main.defaultStyle.fg_color,
         main.defaultStyle.outline_color,
@@ -82,7 +82,7 @@ pub fn slide(state: *main.State, td: f32) main.SlideResult {
     _ = drawing.drawStringOutlined(
         state.backbuffer,
         5 * state.unit,
-        14.5 * state.unit,
+        15.5 * state.unit,
         drawing.Colors.transparent,
         main.defaultStyle.fg_color,
         main.defaultStyle.outline_color,
@@ -105,10 +105,36 @@ pub fn slide(state: *main.State, td: f32) main.SlideResult {
         state.backbuffer,
         slideIntroData.qr_bitmap,
         60 * state.unit,
-        state.backbuffer.height - 40 * state.unit,
+        state.backbuffer.height - 50 * state.unit,
         95 * state.unit,
-        state.backbuffer.height - 5 * state.unit,
+        state.backbuffer.height - 15 * state.unit,
     );
+
+    _ = drawing.drawStringEx(state.backbuffer, .{
+        .x = 1 * state.unit,
+        .y = -6 * state.unit,
+    }, .{
+        .bg = main.defaultStyle.bg_color,
+        .fg = main.defaultStyle.fg_color,
+        .line_height_fraction = 1.2,
+        .outline = true,
+        .outline_color = main.defaultStyle.outline_color,
+        .outline_width = 1,
+        .text_size = 2 * state.unit,
+    }, "github.com/michaelo/bootable-applications-pt2");
+
+    _ = drawing.drawStringEx(state.backbuffer, .{
+        .x = 1 * state.unit,
+        .y = -3 * state.unit,
+    }, .{
+        .bg = main.defaultStyle.bg_color,
+        .fg = main.defaultStyle.fg_color,
+        .line_height_fraction = 1.2,
+        .outline = true,
+        .outline_color = main.defaultStyle.outline_color,
+        .outline_width = 1,
+        .text_size = 2 * state.unit,
+    }, "Michael Odden / me@michaelodden.com");
 
     // state.console.write("fully etc: {d},{d}. Width: {d}", .{ 1 * state.unit, 13 * state.unit, w3 });
     // }
