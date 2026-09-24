@@ -31,13 +31,6 @@ pub const BmpHeader = extern struct {
     dib_header: DibHeader align(1),
 };
 
-// const rgba = extern struct {
-//     r: u8,
-//     g: u8,
-//     b: u8,
-//     a: u8,
-// };
-
 pub fn loadBmpToBitmapFromReader(allocator: std.mem.Allocator, reader: *std.Io.Reader) !drawing.Bitmap {
     // Read and evaluate key header fields
     const bmp_header = try reader.takeStruct(BmpHeader, .little);

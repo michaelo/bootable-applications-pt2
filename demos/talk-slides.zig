@@ -17,24 +17,24 @@ const Colors = drawing.Colors;
 
 // TODO: Standardize structure and organization
 const slides = [_]*const fn (*State, f32) SlideResult{
-    slidePrompt("We are live!", 0.1),
+    slidePrompt("We are live!", 0.2),
     slideSelectRes,
     // slideTitleAndText("Code example", @embedFile("./gfx.zig"), .{
     //     .text_scale = 1,
     // }),
     slideTitleAndText("Controls",
-        \\ * enter - next
-        \\ * b - back
-        \\ * mouse - mouse
-        \\ * i/j/k/l + i/p mouse emulation
-        \\ c - toggle debug console
-        \\ t - toggle theme
-        \\ q - quit
+        \\ enter - next
+        \\     b - back
+        \\ mouse - mouse
+        \\ i/j/k/l + i/p - mouse emulation
+        \\     c - toggle debug console
+        \\     t - toggle theme
+        \\     q - quit
     , .{}),
     @import("talk-slides/slideIntro.zig").slide,
     slidePrompt("What to expect!", 0.1),
     slideTitleAndText("Agenda",
-        \\ * Slow down
+        // \\ * Slow down
         \\ * Intro to UEFI
         \\ * The project repository
         \\ * Demos and code
@@ -47,10 +47,10 @@ const slides = [_]*const fn (*State, f32) SlideResult{
         \\ * Previous talk:
         \\    https://youtu.be/uW98YqvLeKo
         \\ * New this round:
-        \\  * More protocols
-        \\  * Compositions
-        \\  * C -> Zig (not critical)
-        \\  * Demos > tooling
+        \\   * More protocols
+        \\   * Compositions
+        \\   * C -> Zig (not critical)
+        \\   * Demos > tooling
     , .{}),
     slideTitleAndText("Brief summary",
         \\ * Unified Extensible Firmware
@@ -106,7 +106,8 @@ const slides = [_]*const fn (*State, f32) SlideResult{
     // TODO: add slide with image of spec + code
     slidePrompt("Simple gfx output", 0),
     slideGenericImage("EFI_GRAPHICS_OUTPUT_PROTOCOL doc.bmp"),
-    // slideGenericImage("EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL example.bmp"),
+    slideGenericImage("gfx-draw-code.bmp"),
+    slideGenericImage("gfx-draw-qemu.bmp"),
     // TODO: add slide with image of spec + code
     slidePrompt("Event handling", 0),
     slideGenericImage("example-events.bmp"),
@@ -667,6 +668,7 @@ fn button(bitmap: drawing.Bitmap, btn: Button, state: *State) bool {
     return false;
 }
 
+var slideGuiExampleButtonState: bool = false;
 fn slideGuiExample(state: *State, td: f32) SlideResult {
     // immediate mode style?
     _ = td;
@@ -719,7 +721,18 @@ fn slideGuiExample(state: *State, td: f32) SlideResult {
         state,
     )) {
         // Do thing
+        slideGuiExampleButtonState = !slideGuiExampleButtonState;
+    }
+    if (slideGuiExampleButtonState) {
         state.console.write("Clicked button!", .{});
+        _ = drawing.drawStringEx(state.backbuffer, .{
+            .x = state.backbuffer.width / 2,
+            .y = state.backbuffer.height / 2,
+        }, .{
+            .bg = defaultStyle.bg_color,
+            .fg = defaultStyle.fg_color,
+            .text_size = 2 * state.unit,
+        }, "Clicked! Yay.");
     }
 
     drawing.bltBitmapScaledEx(state.backbuffer, pointerBitmap, state.pointerPos.x, state.pointerPos.y, state.pointerPos.x + pointer_size, state.pointerPos.y + pointer_size);

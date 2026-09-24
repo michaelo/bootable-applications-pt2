@@ -27,8 +27,8 @@ pub fn createSlide(path: []const u8) *const fn (*main.State, f32) main.SlideResu
                 state.console.write("Loaded image data raw: {d} bytes", .{bmp_raw.len});
 
                 var reader: std.Io.Reader = .fixed(bmp_raw);
-                bmp_bitmap = @import("../lib/bmp.zig").loadBmpToBitmapFromReader(uefi.pool_allocator, &reader) catch {
-                    state.console.write("Could not load bmp: {s}", .{path});
+                bmp_bitmap = @import("../lib/bmp.zig").loadBmpToBitmapFromReader(uefi.pool_allocator, &reader) catch |e| {
+                    state.console.write("Could not load bmp: {s} ({s})", .{ path, @errorName(e) });
                     return .finished;
                 };
                 state.console.write("Loaded image: {d}x{d}", .{ bmp_bitmap.width, bmp_bitmap.height });
