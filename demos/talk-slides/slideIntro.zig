@@ -101,13 +101,15 @@ pub fn slide(state: *main.State, td: f32) main.SlideResult {
         // TBD: Scale up bitmap so we only need to blt later?
     }
 
+    const qr_width = 30;
+    // state.console.write("qr: ({d},{d} -> {d},{d})", .{});
     drawing.bltBitmapScaled(
         state.backbuffer,
         slideIntroData.qr_bitmap,
-        60 * state.unit,
-        state.backbuffer.height - 50 * state.unit,
-        95 * state.unit,
-        state.backbuffer.height - 15 * state.unit,
+        state.backbuffer.width - (5 + qr_width) * state.unit,
+        state.backbuffer.height - (8 + qr_width) * state.unit,
+        state.backbuffer.width - (5) * state.unit,
+        state.backbuffer.height - 8 * state.unit,
     );
 
     _ = drawing.drawStringEx(state.backbuffer, .{

@@ -17,6 +17,7 @@ const Colors = drawing.Colors;
 
 // TODO: Standardize structure and organization
 const slides = [_]*const fn (*State, f32) SlideResult{
+    @import("talk-slides/slideIntro.zig").slide,
     slidePrompt("We are live!", 0.2),
     slideSelectRes,
     // slideTitleAndText("Code example", @embedFile("./gfx.zig"), .{
@@ -131,6 +132,7 @@ const slides = [_]*const fn (*State, f32) SlideResult{
     , .{}),
     slidePrompt("Read and parse file", 0),
     slideGenericImage("companion-knight-600x800.bmp"),
+    slidePrompt("Rendering strategies", 0),
     slideAnimationRaw,
     slideAnimationBackbuffer,
     // slidePrompt("Hold on... (q?)", 1),
@@ -141,7 +143,9 @@ const slides = [_]*const fn (*State, f32) SlideResult{
     slidePrompt("Performance warning", 0),
     slideShaderCheckerboard,
     slideShaderRadialPlasma,
+    slideShaderRadialPlasmaScaled,
     slideShaderSineWave,
+    slideShaderSineWaveScaled,
     slideTitleAndText("Keep in mind",
         \\ * No multithreading
         \\ * No guarantees to feature
@@ -607,9 +611,40 @@ fn slideShaderSineWave(state: *State, dt: f32) SlideResult {
     return .running;
 }
 
+fn slideShaderSineWaveScaled(state: *State, dt: f32) SlideResult {
+    _ = dt;
+    if (state.firstFrame) {
+        if (shaderLowResBitmap.width > 0) {
+            shaderLowResBitmap.free(uefi.pool_allocator);
+            shaderLowResBitmap = .empty;
+        }
+        shaderLowResBitmap = drawing.bitmapCreate(uefi.pool_allocator, 640, 480) catch .empty;
+    }
+    Shaders.renderScalar(Shaders.shaderSineWaveStripes, shaderLowResBitmap, state.globalT * 3);
+    drawing.bltBitmapScaled(state.backbuffer, shaderLowResBitmap, 0, 0, state.backbuffer.width, state.backbuffer.height);
+
+    return .running;
+}
+
 fn slideShaderCheckerboard(state: *State, dt: f32) SlideResult {
     _ = dt;
     Shaders.renderScalar(Shaders.shaderCheckerboard, state.backbuffer, state.globalT * 3);
+    return .running;
+}
+
+var shaderLowResBitmap: drawing.Bitmap = .empty;
+fn slideShaderRadialPlasmaScaled(state: *State, dt: f32) SlideResult {
+    _ = dt;
+    if (state.firstFrame) {
+        if (shaderLowResBitmap.width > 0) {
+            shaderLowResBitmap.free(uefi.pool_allocator);
+            shaderLowResBitmap = .empty;
+        }
+        shaderLowResBitmap = drawing.bitmapCreate(uefi.pool_allocator, 640, 480) catch .empty;
+    }
+    Shaders.renderScalar(Shaders.shaderRadialPlasma, shaderLowResBitmap, state.globalT * 3);
+    drawing.bltBitmapScaled(state.backbuffer, shaderLowResBitmap, 0, 0, state.backbuffer.width, state.backbuffer.height);
+
     return .running;
 }
 

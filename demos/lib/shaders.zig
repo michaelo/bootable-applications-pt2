@@ -13,13 +13,13 @@ inline fn toPixel(v: f32) drawing.Pixel {
 }
 
 // Scalar shader
-pub fn shaderSineWaveStripes(x: f32, y: f32, t: f32) drawing.Pixel {
-    const STRIPE_FREQ = 0.02;
+pub fn shaderSineWaveStripes(w: f32, _: f32, x: f32, y: f32, t: f32) drawing.Pixel {
+    const STRIPE_FREQ = 0.02 * 1000 / w;
     const v = 0.5 + 0.5 * @sin((x + y) * STRIPE_FREQ + t);
     return toPixel(v);
 }
 
-pub fn shaderCheckerboard(x: f32, y: f32, t: f32) drawing.Pixel {
+pub fn shaderCheckerboard(_: f32, _: f32, x: f32, y: f32, t: f32) drawing.Pixel {
     const TILE_SIZE = 128.0;
     const CHECKER_FREQ = 0.025;
 
@@ -30,9 +30,8 @@ pub fn shaderCheckerboard(x: f32, y: f32, t: f32) drawing.Pixel {
     return toPixel(v);
 }
 
-pub fn shaderRadialPlasma(x: f32, y: f32, t: f32) drawing.Pixel {
-    const PLASMA_RADIUS = 512.0;
-
+pub fn shaderRadialPlasma(w: f32, _: f32, x: f32, y: f32, t: f32) drawing.Pixel {
+    const PLASMA_RADIUS = w / 5;
     const dx = (x - PLASMA_RADIUS) / PLASMA_RADIUS;
     const dy = (y - PLASMA_RADIUS) / PLASMA_RADIUS;
     const d = @sqrt(dx * dx + dy * dy);
@@ -50,7 +49,7 @@ pub fn renderScalar(comptime shader: anytype, bitmap: drawing.Bitmap, t: f32) vo
     while (y < height) : (y += 1) {
         var x: usize = 0;
         while (x < width) : (x += 1) {
-            buffer[y * stride + x] = shader(@floatFromInt(x), @floatFromInt(y), t).int;
+            buffer[y * stride + x] = shader(bitmap.width, bitmap.height, @floatFromInt(x), @floatFromInt(y), t).int;
         }
     }
 }
