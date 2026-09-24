@@ -15,7 +15,9 @@ pub fn createSlide(path: []const u8) *const fn (*main.State, f32) main.SlideResu
                 // Free any previous image if already loaded
                 if (bmp_bitmap.width > 0) {
                     bmp_bitmap.free(uefi.pool_allocator);
+                    bmp_bitmap = .empty;
                 }
+
                 const bmp_raw = file.readFile(uefi.pool_allocator, path) catch |e| {
                     // TOOD: error handling
                     state.console.write("Could not open: {s} ({s})", .{ path, @errorName(e) });
@@ -26,6 +28,7 @@ pub fn createSlide(path: []const u8) *const fn (*main.State, f32) main.SlideResu
 
                 var reader: std.Io.Reader = .fixed(bmp_raw);
                 bmp_bitmap = @import("../lib/bmp.zig").loadBmpToBitmapFromReader(uefi.pool_allocator, &reader) catch {
+                    state.console.write("Could not load bmp: {s}", .{path});
                     return .finished;
                 };
                 state.console.write("Loaded image: {d}x{d}", .{ bmp_bitmap.width, bmp_bitmap.height });

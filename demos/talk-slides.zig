@@ -69,12 +69,12 @@ const slides = [_]*const fn (*State, f32) SlideResult{
     slidePrompt("Why", 0),
     slideTitleAndText("Why",
         \\ * (Still) fun
-        \\ * Trends
+        \\ * About trends
         \\ * Let's zag!
     , .{}),
     slidePrompt("Food for thought...\n         --->", 0),
     slideGenericImage("gfx-windows-minimal-example.bmp"),
-    slideGenericImage("gfx-uefi-minimal.bmp"),
+    slideGenericImage("gfx-uefi-minimal-shrink.bmp"),
     slidePrompt("The repository", 0),
     slideGenericImage("repo-overview.bmp"),
     slideTitleAndText("Design goals",
@@ -91,10 +91,15 @@ const slides = [_]*const fn (*State, f32) SlideResult{
     , .{}),
     slidePrompt("Let's throw away\n  some code!", 0),
     slideGenericImage("notallowed.bmp"),
+    slideGenericImage("process.bmp"),
+    slideGenericImage("uefi-spec-introduction.bmp"),
+    slideGenericImage("uefi-spec-bootingseq.bmp"),
+    slideGenericImage("uefi-menu-overview.bmp"),
     // img: OS crossout
     slidePrompt("Simple text output", 0),
     // slideGenericImage("EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL doc.bmp"),
     slideGenericImage("EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL example.bmp"),
+    slideGenericImage("txtout-qemu.bmp"),
     // TODO: add slide with image of spec + code
     // slidePrompt("Simple text input", 0),
     // slideGenericImage("EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL example.bmp"),
@@ -104,7 +109,7 @@ const slides = [_]*const fn (*State, f32) SlideResult{
     // slideGenericImage("EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL example.bmp"),
     // TODO: add slide with image of spec + code
     slidePrompt("Event handling", 0),
-    slideGenericImage("EFI_GRAPHICS_OUTPUT_PROTOCOL doc.bmp"),
+    slideGenericImage("example-events.bmp"),
     slidePrompt("Simple pointer input", 0),
     slideGenericImage("EFI_SIMPLE_POINTER_PROTOCOL doc.bmp"),
     slideGenericImage("EFI_SIMPLE_POINTER_PROTOCOL example.bmp"),
@@ -116,7 +121,9 @@ const slides = [_]*const fn (*State, f32) SlideResult{
     slidePrompt("Compositions!", 0),
     slideTitleAndText("Custom libs in repo",
         \\ * Text rendering (8x8)
-        \\ * Bitmap handling
+        \\ * .bmp parser
+        \\ * Graphic primitives:
+        \\   line, circle, rectangle, ...
         \\ * Bitmap scaling
         \\ * Convenience functions
         \\ * Debug console
@@ -144,7 +151,7 @@ const slides = [_]*const fn (*State, f32) SlideResult{
         \\ * Disable watchdog for long-
         \\      running apps
         \\  boot_services
-        \\      .setWatchdogTimer(0, 0, null);
+        \\      .setWatchdogTimer(0, 0, null) catch {};
     , .{}),
     slidePrompt("Let's run it\nourselves (boot!)", 0),
     // Boot back into OS and showcase how to use the repository
@@ -180,7 +187,8 @@ const slides = [_]*const fn (*State, f32) SlideResult{
         \\ * Running on hardware
     , .{}),
     slidePrompt("Questions?", 1),
-    slideFinal,
+    slidePrompt("One more thing...", 1),
+    // slideFinal,
 };
 
 const themeDark = Style{
