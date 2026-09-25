@@ -7,6 +7,16 @@ Install zig 0.17.x (0.16 and 0.15.1 should also likely work for the single-file 
 
 `./build-and-run.sh hello-gfx.zig`
 
+To run the slide deck application as presented at NDC TechTown 2026:
+
+`./build-and-run.sh talk-slides.zig`
+
+To flash an example to a thumb drive on mac:
+
+`./build-and-flash.sh talk-slides.zig /dev/disk2`
+
+(replace /dev/disk2 with whatever refers to your thumb drive device)
+
 About
 --
 
