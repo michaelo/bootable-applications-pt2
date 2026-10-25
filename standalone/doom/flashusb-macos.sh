@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+set -u
+
+function log() {
+    echo "BUILD: $*"
+}
+
+IMGPATH="puredoom_zig.img"
+DEVICE=$1
+
+if [ ! -f "$IMGPATH" ]; then
+    log File \"$IMGPATH\" not found
+    exit 1
+fi
+
+diskutil unmountDisk $DEVICE || true
+sudo dd if=$IMGPATH of=$DEVICE bs=1M
+diskutil eject $DEVICE
+
+log Finished.
